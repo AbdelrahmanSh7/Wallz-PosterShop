@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { products } from '../data/products';
-import './Category/Category.css';
+import './Category/Category.css'; 
 
 const Shop = () => {
   const location = useLocation();
