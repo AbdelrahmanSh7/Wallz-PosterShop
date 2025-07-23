@@ -46,7 +46,7 @@ function Product() {
             Order via WhatsApp
           </a>
           <a
-            href="https://instagram.com/your_instagram_username"
+            href="https://www.instagram.com/wallz_eg/"
             target="_blank"
             rel="noopener noreferrer"
             className="calm-instagram-btn"
