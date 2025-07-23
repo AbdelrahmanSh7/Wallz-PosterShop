@@ -1,10 +1,27 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { categories } from '../../data/products';
 import './CategorySlider.css';
 
 export default function CategorySlider() {
   const scrollRef = useRef();
+
+  // Auto-scroll every 0.5s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
+        // لو وصلت للنهاية، ارجع للبداية
+        if (
+          scrollRef.current.scrollLeft + scrollRef.current.offsetWidth >=
+          scrollRef.current.scrollWidth
+        ) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+      }
+    }, 2500); // 0.5 ثانية
+    return () => clearInterval(interval);
+  }, []);
 
   const scroll = (direction) => {
     if (direction === 'left') scrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });

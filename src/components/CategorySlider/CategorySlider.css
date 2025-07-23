@@ -36,6 +36,11 @@
   gap: 30px;
   scroll-behavior: smooth;
   padding: 10px 0 30px 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.category-slider::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
 }
 
 .category-card {
@@ -98,13 +103,12 @@
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.3s ease, opacity 0.3s ease;
-  transform: translateY(15px);
-  opacity: 0;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .category-card:hover .category-label {
-  transform: translateY(0);
-  opacity: 1;
+  transform: scale(1.08);
 }
 
 .slider-arrow {
