@@ -1,16 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import './Navbar.css'
-import { FiShoppingCart, FiUser } from 'react-icons/fi'
+import { FiShoppingCart, FiUser, FiSearch } from 'react-icons/fi'
 
 const Navbar = () => {
-  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-    if (e.key === 'Enter' && search.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(search)}`);
-    }
+  const handleSearchIconClick = () => {
+    navigate('/shop');
   };
 
   return (
@@ -26,14 +23,7 @@ const Navbar = () => {
         <a href="#footer" className="navbar__link">Contact</a>
       </div>
       <div className="navbar__right">
-        <input
-          type="text"
-          className="navbar__search"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={handleSearch}
-        />
+        <span className="navbar__icon" style={{ cursor: 'pointer' }} onClick={handleSearchIconClick}><FiSearch /></span>
         <span className="navbar__icon"><FiShoppingCart /></span>
         <span className="navbar__icon"><FiUser /></span>
       </div>

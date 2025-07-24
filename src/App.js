@@ -11,10 +11,11 @@ import Footer from './components/Footer/Footer';
 function AppContent() {
   const location = useLocation();
   const isProductPage = location.pathname.startsWith('/product/');
+  const isShopPage = location.pathname.startsWith('/shop');
   return (
     <>
       <Navbar />
-      {!isProductPage && <CategorySlider />}
+      {!isProductPage && !isShopPage && <CategorySlider />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/category/:categoryId" element={<Category />} />
