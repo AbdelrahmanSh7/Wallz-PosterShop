@@ -59,6 +59,35 @@
   font-weight: 700;
   margin-bottom: 18px;
 }
+
+
+
+/* Price Container */
+.product-calm-price-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.original-price {
+  font-size: 1.2em;
+  color: #999;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.discounted-price {
+  font-size: 1.8em;
+  color: #e1306c;
+  font-weight: 800;
+  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .product-calm-description {
   font-size: 1.1em;
   color: #666;
@@ -142,6 +171,33 @@
 /* --- Product Responsive Improvements --- */
 
 /* Default (desktop) styles are already good, just improve mobile/tablet */
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes typing {
+  0%, 25% {
+    width: 0;
+    opacity: 0;
+  }
+  50%, 75% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 0;
+    opacity: 0;
+  }
+}
 
 @media (max-width: 1280px) {
   .product-calm-container {

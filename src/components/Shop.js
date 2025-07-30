@@ -10,6 +10,26 @@ const Shop = () => {
   const [search, setSearch] = useState(initialSearch);
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
+  const topRef = useRef(null);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    // Try multiple methods to ensure scrolling works
+    const scrollToTop = () => {
+      if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    
+    // Immediate scroll
+    scrollToTop();
+    
+    // Delayed scroll to ensure it works after page load
+    setTimeout(scrollToTop, 100);
+    setTimeout(scrollToTop, 500);
+  }, []);
 
   useEffect(() => {
     if (searchInputRef.current) {
@@ -28,8 +48,53 @@ const Shop = () => {
     }
   };
 
+  // Calculate original price (before discount)
+  const calculateOriginalPrice = (discountedPrice) => {
+    const discountPercentage = 15;
+    const originalPrice = Math.round(discountedPrice / (1 - discountPercentage / 100));
+    return originalPrice;
+  };
+
   return (
-    <div className="products-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 0' }}>
+    <div className="products-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 0', paddingTop: '82px' }}>
+      <div ref={topRef}></div>
+      
+      {/* Discount Banner */}
+      <div className="discount-banner" style={{
+        background: 'linear-gradient(135deg, #2c2c2c, #4a4a4a)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        borderRadius: 0,
+        padding: '8px 20px',
+        boxShadow: '0 2px 10px rgba(44, 44, 44, 0.3)',
+        border: 'none',
+        borderBottom: '2px solid rgba(255, 255, 255, 0.2)'
+      }}>
+        <div className="discount-banner-content" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '15px',
+          color: 'white',
+          fontWeight: '700',
+          fontSize: '1.1em',
+          textAlign: 'center'
+        }}>
+          <span className="typing-text" style={{
+            fontWeight: '800',
+            letterSpacing: '0.5px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            animation: 'typing 4s ease-in-out infinite',
+            display: 'inline-block',
+            position: 'relative'
+          }}>15% OFF ON ALL PRODUCTS</span>
+        </div>
+      </div>
+      
       <label htmlFor="shop-search" style={{ fontWeight: 500, fontSize: '1.2em', marginLeft: 8 }}>Search</label>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, margin: '18px 0 32px 0' }}>
         <input
@@ -71,17 +136,37 @@ const Shop = () => {
       </div>
       <div className="posters-grid" style={{ marginTop: 18 }}>
         {filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => (
-            <Link to={`/product/${product.id}`} className="poster-card" key={product.id} style={{ minWidth: 220 }}>
-              <div className="poster-image-container">
-                <img src={product.image} alt={product.name} className="poster-image" />
-              </div>
-              <div className="poster-info">
-                <div className="poster-name creative-font" style={{ fontSize: '1.15em', marginBottom: 8 }}>{product.name}</div>
-                <div className="poster-price" style={{ fontSize: '1.18em', fontWeight: 700 }}>{product.price} EGP</div>
-              </div>
-            </Link>
-          ))
+          filteredProducts.map((product) => {
+            const discountedPrice = product.price;
+            const originalPrice = calculateOriginalPrice(discountedPrice);
+            
+            return (
+              <Link to={`/product/${product.id}`} className="poster-card" key={product.id} style={{ minWidth: 220 }}>
+                <div className="poster-image-container">
+                  <img src={product.image} alt={product.name} className="poster-image" />
+                </div>
+                <div className="poster-info">
+                  <div className="poster-name creative-font" style={{ fontSize: '1.15em', marginBottom: 8 }}>{product.name}</div>
+                  <div className="price-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                    <span className="original-price-overlay" style={{ 
+                      fontSize: '1em',
+                      color: '#999',
+                      textDecoration: 'line-through',
+                      fontWeight: '500'
+                    }}>{originalPrice} EGP</span>
+                    <span className="discounted-price-overlay" style={{ 
+                      fontSize: '1.18em', 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #e1306c, #ff6b6b)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>{discountedPrice} EGP</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })
         ) : (
           <p style={{ fontSize: '1.2em', color: '#888', margin: '40px auto', textAlign: 'center' }}>No results found.</p>
         )}
