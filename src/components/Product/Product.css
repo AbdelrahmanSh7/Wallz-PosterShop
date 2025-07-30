@@ -60,7 +60,37 @@
   margin-bottom: 18px;
 }
 
+/* Discount Badge */
+.discount-badge {
+  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  font-weight: 700;
+  margin-bottom: 15px;
+  display: inline-block;
+  box-shadow: 0 4px 15px rgba(225, 48, 108, 0.3);
+  animation: pulse 2s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
 
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.discount-text {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
 
 /* Price Container */
 .product-calm-price-container {
@@ -171,33 +201,6 @@
 /* --- Product Responsive Improvements --- */
 
 /* Default (desktop) styles are already good, just improve mobile/tablet */
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes typing {
-  0%, 25% {
-    width: 0;
-    opacity: 0;
-  }
-  50%, 75% {
-    width: 100%;
-    opacity: 1;
-  }
-  100% {
-    width: 0;
-    opacity: 0;
-  }
-}
 
 @media (max-width: 1280px) {
   .product-calm-container {

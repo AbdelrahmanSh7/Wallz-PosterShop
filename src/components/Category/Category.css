@@ -1,9 +1,9 @@
 /* Category Component Styles */
 
 .category-page-container {
-  padding: 50px 20px 20px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 40px 80px;
+  background-color: #f8f8f8;
+  min-height: 100vh;
 }
 
 .category-header {
@@ -78,7 +78,40 @@
   transition: transform 0.4s cubic-bezier(0.4, 0.2, 0.2, 1);
 }
 
+/* Discount Badge Overlay */
+.discount-badge-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(225, 48, 108, 0.4);
+  z-index: 2;
+  animation: pulse-overlay 2s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
 
+@keyframes pulse-overlay {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.discount-text-overlay {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-size: 0.75em;
+}
 
 .poster-card:hover .poster-image-container::after {
   content: '';
@@ -132,7 +165,52 @@
   background-clip: text;
 }
 
+/* Additional styles for Home page */
+.category-slider-section .discount-badge-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(225, 48, 108, 0.4);
+  z-index: 2;
+  animation: pulse-overlay 2s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
 
+.category-slider-section .discount-text-overlay {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-size: 0.75em;
+}
+
+.category-slider-section .price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.category-slider-section .original-price-overlay {
+  color: #999;
+  font-size: 0.9em;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.category-slider-section .discounted-price-overlay {
+  color: #e1306c;
+  font-size: 1.15em;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 .poster-price {
   color: #0070f3;
@@ -146,57 +224,6 @@
   padding: 100px 20px;
   font-size: 1.5em;
   color: #666;
-}
-
-/* Discount Banner */
-.discount-banner {
-  background: linear-gradient(135deg, #2c2c2c, #4a4a4a);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  border-radius: 0;
-  padding: 8px 20px;
-  box-shadow: 0 2px 10px rgba(44, 44, 44, 0.3);
-  border: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.discount-banner-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  color: white;
-  font-weight: 700;
-  font-size: 1.1em;
-  text-align: center;
-}
-
-.typing-text {
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  animation: typing 4s ease-in-out infinite;
-  display: inline-block;
-  position: relative;
-}
-
-@keyframes typing {
-  0%, 25% {
-    width: 0;
-    opacity: 0;
-  }
-  50%, 75% {
-    width: 100%;
-    opacity: 1;
-  }
-  100% {
-    width: 0;
-    opacity: 0;
-  }
 }
 
 @media (max-width: 900px) {

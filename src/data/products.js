@@ -1853,9 +1853,4 @@ export const getProductById = (productId) => {
 
 export const getCategoryById = (categoryId) => {
   return categories.find(category => category.id === categoryId);
-};
-
-export const getRandomProducts = (arr, n) => {
-  const shuffled = arr.slice().sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, n);
 }; 

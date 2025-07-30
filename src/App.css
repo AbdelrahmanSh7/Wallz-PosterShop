@@ -1,1 +1,4 @@
- 
+.App {
+  text-align: center;
+  margin-top: 50px; /* Space for fixed banner + navbar */
+} 

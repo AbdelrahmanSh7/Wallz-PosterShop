@@ -11,23 +11,30 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar__left">
-        <Link to="/">
-          <img src="/logo.png" alt="Logo" className="navbar__logo-img" />
-        </Link>
+    <>
+      {/* Discount Banner */}
+      <div className="discount-banner">
+        <span className="discount-banner-text">15% OFF ON ALL PRODUCTS</span>
       </div>
-      <div className="navbar__center">
-        <a href="/" className="navbar__link">Shop ▼</a>
-        <a href="/" className="navbar__link">Categories</a>
-        <a href="#footer" className="navbar__link">Contact</a>
-      </div>
-      <div className="navbar__right">
-        <span className="navbar__icon" style={{ cursor: 'pointer' }} onClick={handleSearchIconClick}><FiSearch /></span>
-        <span className="navbar__icon"><FiShoppingCart /></span>
-        <span className="navbar__icon"><FiUser /></span>
-      </div>
-    </nav>
+      
+      <nav className="navbar">
+        <div className="navbar__left">
+          <Link to="/">
+            <img src="/logo.png" alt="Logo" className="navbar__logo-img" />
+          </Link>
+        </div>
+        <div className="navbar__center">
+          <a href="/" className="navbar__link">Shop ▼</a>
+          <a href="/" className="navbar__link">Categories</a>
+          <a href="#footer" className="navbar__link">Contact</a>
+        </div>
+        <div className="navbar__right">
+          <span className="navbar__icon" style={{ cursor: 'pointer' }} onClick={handleSearchIconClick}><FiSearch /></span>
+          <span className="navbar__icon"><FiShoppingCart /></span>
+          <span className="navbar__icon"><FiUser /></span>
+        </div>
+      </nav>
+    </>
   )
 }
 
