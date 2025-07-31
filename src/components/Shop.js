@@ -10,26 +10,25 @@ const Shop = () => {
   const [search, setSearch] = useState(initialSearch);
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
-  const topRef = useRef(null);
 
-  // Scroll to top when component mounts
-  useEffect(() => {
-    // Try multiple methods to ensure scrolling works
-    const scrollToTop = () => {
-      if (topRef.current) {
-        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
+  // Remove automatic scroll to top - keep page at top when opened
+  // useEffect(() => {
+  //   // Try multiple methods to ensure scrolling works
+  //   const scrollToTop = () => {
+  //     if (topRef.current) {
+  //       topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //     } else {
+  //       window.scrollTo({ top: 0, behavior: 'smooth' });
+  //     }
+  //   };
     
-    // Immediate scroll
-    scrollToTop();
+  //   // Immediate scroll
+  //   scrollToTop();
     
-    // Delayed scroll to ensure it works after page load
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 500);
-  }, []);
+  //   // Delayed scroll to ensure it works after page load
+  //   setTimeout(scrollToTop, 100);
+  //   setTimeout(scrollToTop, 500);
+  // }, []);
 
   useEffect(() => {
     if (searchInputRef.current) {
@@ -59,7 +58,6 @@ const Shop = () => {
 
   return (
     <div className="products-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 0' }}>
-      <div ref={topRef}></div>
       <label htmlFor="shop-search" style={{ fontWeight: 500, fontSize: '1.2em', marginLeft: 8 }}>Search</label>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, margin: '18px 0 32px 0' }}>
         <input

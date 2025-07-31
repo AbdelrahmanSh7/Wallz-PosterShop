@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { categories } from '../../data/products';
 import './CategorySlider.css';
 
@@ -9,6 +9,7 @@ export default function CategorySlider() {
   const [menuAnim, setMenuAnim] = useState('');
   const menuRef = useRef();
   const buttonRef = useRef();
+  const navigate = useNavigate();
 
   // Auto-scroll every 0.5s
   useEffect(() => {
@@ -58,6 +59,17 @@ export default function CategorySlider() {
     else scrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
   };
 
+  // Function to handle category selection with scroll to top
+  const handleCategoryClick = (categoryId) => {
+    // Navigate to category
+    navigate(`/category/${categoryId}`);
+    
+    // Scroll to top after navigation
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <div className="category-slider-section">
       <h2 className="slider-title">Categories</h2>
@@ -84,10 +96,17 @@ export default function CategorySlider() {
           style={{ pointerEvents: showMenu || menuAnim === 'close' ? 'auto' : 'none' }}
         >
           {categories.map((cat, idx) => (
-            <Link to={`/category/${cat.id}`} className="mobile-category-item" key={cat.id || idx} onClick={() => setShowMenu(false)}>
+            <div 
+              className="mobile-category-item" 
+              key={cat.id || idx} 
+              onClick={() => {
+                setShowMenu(false);
+                handleCategoryClick(cat.id);
+              }}
+            >
               <span className="mobile-category-dot"></span>
               {cat.name}
-            </Link>
+            </div>
           ))}
         </div>
       </div>
@@ -96,10 +115,15 @@ export default function CategorySlider() {
         <button className="slider-arrow left" onClick={() => scroll('left')}>&lt;</button>
         <div className="category-slider" ref={scrollRef}>
           {categories.map((cat, idx) => (
-            <Link to={`/category/${cat.id}`} className="category-card" key={cat.id || idx}>
+            <div 
+              className="category-card" 
+              key={cat.id || idx}
+              onClick={() => handleCategoryClick(cat.id)}
+              style={{ cursor: 'pointer' }}
+            >
               <img src={cat.image} alt={cat.name} />
               <div className="category-label">{cat.name}</div>
-            </Link>
+            </div>
           ))}
         </div>
         <button className="slider-arrow right" onClick={() => scroll('right')}>&gt;</button>

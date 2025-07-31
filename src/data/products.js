@@ -39,7 +39,13 @@ export const categories = [
   {
     id: "series-movies",
     name: "Series & Movies",
-    image: "/Series & Movie/3.jpg",
+    image: "/Series & Movie/20.jpg",
+    description: "Series & Movies posters"
+  },
+  {
+    id: "Gaming",
+    name: "Gaming",
+    image: "/Gaming/10.jpg",
     description: "Series & Movies posters"
   },
   {
@@ -579,7 +585,7 @@ export const products = [
   {
     id: "player-vibes-22",
     categoryId: "player-vibes",
-    name: "Leo Messi", 
+    name: "Lamine Yamal", 
     price: 280,
     image: "/Player Vibes/22.jpg",
     sizes: [
@@ -592,7 +598,7 @@ export const products = [
   {
     id: "player-vibes-23",
     categoryId: "player-vibes",
-    name: "Mahmoud SK", 
+    name: "Leo Messi", 
     price: 280,
     image: "/Player Vibes/23.jpg",
     sizes: [
@@ -605,7 +611,7 @@ export const products = [
   {
     id: "player-vibes-24",
     categoryId: "player-vibes",
-    name: "Mohamed Salah", 
+    name: "Mahmoud SK", 
     price: 280,
     image: "/Player Vibes/24.jpg",
     sizes: [
@@ -618,7 +624,7 @@ export const products = [
   {
     id: "player-vibes-25",
     categoryId: "player-vibes",
-    name: "Omar Marmoush", 
+    name: "Mohamed Salah", 
     price: 280,
     image: "/Player Vibes/25.jpg",
     sizes: [
@@ -631,7 +637,7 @@ export const products = [
   {
     id: "player-vibes-26",
     categoryId: "player-vibes",
-    name: "RH", 
+    name: "Omar Marmoush", 
     price: 280,
     image: "/Player Vibes/26.jpg",
     sizes: [
@@ -644,7 +650,7 @@ export const products = [
   {
     id: "player-vibes-27",
     categoryId: "player-vibes",
-    name: "Messi", 
+    name: "Ronaldinho", 
     price: 280,
     image: "/Player Vibes/27.jpg",
     sizes: [
@@ -844,6 +850,149 @@ export const products = [
     name: "Elzamalek F.C",
     price: 280,
     image: "/Club Logos/15.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-16",
+    categoryId: "club-logos",
+    name: "Paris Saint-Germain",
+    price: 280,
+    image: "/Club Logos/16.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-17",
+    categoryId: "club-logos",
+    name: "Bayern Munich",
+    price: 280,
+    image: "/Club Logos/17.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-18",
+    categoryId: "club-logos",
+    name: "Barcelona",
+    price: 280,
+    image: "/Club Logos/18.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-19",
+    categoryId: "club-logos",
+    name: "Real Madrid",
+    price: 280,
+    image: "/Club Logos/19.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-20",
+    categoryId: "club-logos",
+    name: "Real Madrid",
+    price: 280,
+    image: "/Club Logos/20.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-21",
+    categoryId: "club-logos",
+    name: "Manchester City",
+    price: 280,
+    image: "/Club Logos/21.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-22",
+    categoryId: "club-logos",
+    name: "Liverpool",
+    price: 280,
+    image: "/Club Logos/22.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-23",
+    categoryId: "club-logos",
+    name: "Chelsea",
+    price: 280,
+    image: "/Club Logos/23.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-24",
+    categoryId: "club-logos",
+    name: "Arsenal",
+    price: 280,
+    image: "/Club Logos/24.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-25",
+    categoryId: "club-logos",
+    name: "Elzamalek F.C",
+    price: 280,
+    image: "/Club Logos/25.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "club-logos-26",
+    categoryId: "club-logos",
+    name: "Manchester United",
+    price: 280,
+    image: "/Club Logos/26.jpg",
     sizes: [
       { name: "Small", price: 230, dimensions: "20x30 cm" },
       { name: "Medium", price: 280, dimensions: "30x40 cm" },
@@ -1285,6 +1434,58 @@ export const products = [
     ],
     inStock: true
   },
+  {
+    id: "automotive-21",
+    categoryId: "automotive",
+    name: "Nissan Skyline GT-R R34",
+    price: 280,
+    image: "/Automotive/21.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-22",
+    categoryId: "automotive",
+    name: "Nissan Skyline GT-R R35",
+    price: 280,
+    image: "/Automotive/22.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-23",
+    categoryId: "automotive",
+    name: "Porsche 911 GT3 RS",
+    price: 280,
+    image: "/Automotive/23.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-24",
+    categoryId: "automotive",
+    name: "BiiGati",
+    price: 280,
+    image: "/Automotive/24.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
 
   // Series & Movies Category
   {
@@ -1376,6 +1577,333 @@ export const products = [
       { name: "Large", price: 370, dimensions: "40x50 cm" }
     ],
     image: "/Series & Movie/7.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-8",
+    categoryId: "series-movies",
+    name: "F1 2025",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/8.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-9",
+    categoryId: "series-movies",
+    name: "F1 2025",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/9.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-10",
+    categoryId: "series-movies",
+    name: "Lacasa de Papel",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/10.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-11",
+    categoryId: "series-movies",
+    name: "Friends",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/11.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-12",
+    categoryId: "series-movies",
+    name: "Game Of Thrones",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/12.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-13",
+    categoryId: "series-movies",
+    name: "Game of Thrones",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/13.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-14",
+    categoryId: "series-movies",
+    name: "Vikings",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/14.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-15",
+    categoryId: "series-movies",
+    name: "Breaking Bad",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/15.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-16",
+    categoryId: "series-movies",
+    name: "Peaky Blinders",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/16.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-17",
+    categoryId: "series-movies",
+    name: "Peaky Blinders",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/17.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-18",
+    categoryId: "series-movies",
+    name: "Joker",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/18.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-19",
+    categoryId: "series-movies",
+    name: "Spider-Man",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/19.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-20",
+    categoryId: "series-movies",
+    name: "God Father",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/20.jpg",
+    inStock: true
+  },
+  {
+    id: "series-movies-7",
+    categoryId: "series-movies",
+    name: "seven",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Series & Movie/7.jpg",
+    inStock: true
+  },
+  // Gaming Category
+  {
+    id: "Gaming-1",
+    categoryId: "Gaming",
+    name: "Minecraft",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/1.jpg",
+    inStock: true
+  },
+  
+  {
+    id: "Gaming-2",
+    categoryId: "Gaming",
+    name: "Minecraft",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/2.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-3",
+    categoryId: "Gaming",
+    name: "God of War",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/3.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-4",
+    categoryId: "Gaming",
+    name: "Fortnite",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/4.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-5",
+    categoryId: "Gaming",
+    name: "The Last of Us",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/5.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-6",
+    categoryId: "Gaming",
+    name: "Red Dead Redemption 2",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/6.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-7",
+    categoryId: "Gaming",
+    name: "Pubg",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/7.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-8",
+    categoryId: "Gaming",
+    name: "Pubg ",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/8.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-9",
+    categoryId: "Gaming",
+    name: "Pubg ",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/9.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-10",
+    categoryId: "Gaming",
+    name: "Red Dead Redemption 2",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/10.jpg",
+    inStock: true
+  },
+  {
+    id: "Gaming-11",
+    categoryId: "Gaming",
+    name: "Valorant",
+    price: 280,
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    image: "/Gaming/11.jpg",
     inStock: true
   },
 

@@ -10,26 +10,26 @@ function getRandomProducts(arr, n) {
 
 function Home() {
   const randomProducts = getRandomProducts(products, 16);
-  const topRef = useRef(null);
 
-  // Scroll to top when component mounts
-  useEffect(() => {
-    // Try multiple methods to ensure scrolling works
-    const scrollToTop = () => {
-      if (topRef.current) {
-        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
+  // Remove automatic scroll to top - keep page at top when opened
+  // const topRef = useRef(null);
+  // useEffect(() => {
+  //   // Try multiple methods to ensure scrolling works
+  //   const scrollToTop = () => {
+  //     if (topRef.current) {
+  //       topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //     } else {
+  //       window.scrollTo({ top: 0, behavior: 'smooth' });
+  //     }
+  //   };
     
-    // Immediate scroll
-    scrollToTop();
+  //   // Immediate scroll
+  //   scrollToTop();
     
-    // Delayed scroll to ensure it works after page load
-    setTimeout(scrollToTop, 100);
-    setTimeout(scrollToTop, 500);
-  }, []);
+  //   // Delayed scroll to ensure it works after page load
+  //   setTimeout(scrollToTop, 100);
+  //   setTimeout(scrollToTop, 500);
+  // }, []);
 
   // Calculate original price (before discount)
   const calculateOriginalPrice = (discountedPrice) => {
@@ -42,7 +42,6 @@ function Home() {
 
   return (
     <div className="category-slider-section">
-      <div ref={topRef}></div>
       <h2 className="slider-title" >Featured Posters</h2>
       <div className="posters-grid">
         {randomProducts.map(product => {
