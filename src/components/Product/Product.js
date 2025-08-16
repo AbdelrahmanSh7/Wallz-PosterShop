@@ -82,7 +82,12 @@ function Product() {
         </div>
         <div className="product-calm-order-btns">
           <a
-            href={`https://wa.me/201100643834?text=${encodeURIComponent(`Hi, I'm interested in the poster: ${category?.name} : ${product.name} (${selectedSize}) - Price: ${discountedPrice} EGP (15% off)`)}`}
+           href={`https://wa.me/201100643834?text=${encodeURIComponent(
+            `Hi, I'm interested in this poster:
+        ${category?.name} : ${product.name} (${selectedSize})
+        Price: ${discountedPrice} EGP (15% off)
+        Check it here: ${window.location.origin}/product/${product.id}`
+          )}`}
             target="_blank"
             rel="noopener noreferrer"
             className="calm-whatsapp-btn"
