@@ -82,7 +82,7 @@ function Product() {
         </div>
         <div className="product-calm-order-btns">
           <a
-           href={`https://wa.me/201100643834?text=${encodeURIComponent(
+           href={`https://wa.me/201112659808?text=${encodeURIComponent(
             `Hi, I'm interested in this poster:
         ${category?.name} : ${product.name} (${selectedSize})
         Price: ${discountedPrice} EGP (15% off)
