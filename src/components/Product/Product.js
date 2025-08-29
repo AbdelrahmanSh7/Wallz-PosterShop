@@ -8,7 +8,15 @@ function Product() {
   const { productId } = useParams();
   const product = getProductById(productId);
   const [selectedSize, setSelectedSize] = useState(product?.sizes[0]?.name);
+  const [selectedColor, setSelectedColor] = useState('black');
   const topRef = useRef(null);
+
+  // Color options for posters
+  const colorOptions = [
+    { name: 'black', label: 'Classic Black', hex: '#1a1a1a' },
+    { name: 'white', label: 'Pure White', hex: '#ffffff' },
+    { name: 'darkWood', label: 'Natural Wood', hex: '#5D4037' }
+  ];
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -80,13 +88,100 @@ function Product() {
             </button>
           ))}
         </div>
+        
+        {/* Color Selection */}
+        <div className="product-calm-colors">
+          <h3 className="color-section-title">Choose Color</h3>
+          <div className="color-options">
+            {colorOptions.map((color, idx) => (
+              <button
+                key={idx}
+                className={`color-option${selectedColor === color.name ? ' selected' : ''}`}
+                onClick={() => setSelectedColor(color.name)}
+                style={{
+                  '--color-hex': color.hex,
+                  '--color-border': color.border
+                }}
+              >
+                <div className="color-preview"></div>
+                <span className="color-label">{color.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <div className="product-calm-order-btns">
+          <button 
+            onClick={() => {
+              const cartItem = {
+                id: `${product.id}-${selectedSize}-${selectedColor}`,
+                productId: product.id,
+                name: product.name,
+                category: category?.name,
+                size: selectedSize,
+                color: colorOptions.find(c => c.name === selectedColor)?.label,
+                price: discountedPrice,
+                image: product.image,
+                quantity: 1
+              };
+              
+              const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+              const existingItemIndex = existingCart.findIndex(item => item.id === cartItem.id);
+              
+              if (existingItemIndex >= 0) {
+                existingCart[existingItemIndex].quantity += 1;
+              } else {
+                existingCart.push(cartItem);
+              }
+              
+              localStorage.setItem('cart', JSON.stringify(existingCart));
+              
+              // Dispatch custom event to update navbar cart count
+              window.dispatchEvent(new CustomEvent('cartUpdated'));
+              
+              // Show success banner
+              const banner = document.createElement('div');
+              banner.className = 'success-banner';
+              banner.innerHTML = `
+                <div class="banner-content">
+                  <span>✅ Product added to cart successfully!</span>
+                  <button class="view-cart-btn">View Cart</button>
+                </div>
+              `;
+              
+              document.body.appendChild(banner);
+              
+              // Add click event to view cart button
+              setTimeout(() => {
+                const viewCartBtn = banner.querySelector('.view-cart-btn');
+                viewCartBtn.addEventListener('click', () => {
+                  window.location.href = '/cart';
+                });
+              }, 100);
+              
+              // Remove banner after 4 seconds
+              setTimeout(() => {
+                if (banner.parentNode) {
+                  banner.parentNode.removeChild(banner);
+                }
+              }, 4000);
+            }}
+            className="add-to-cart-btn"
+          >
+            🛒 Add to Cart
+          </button>
+          
           <a
            href={`https://wa.me/201112659808?text=${encodeURIComponent(
-            `Hi, I'm interested in this poster:
-        ${category?.name} : ${product.name} (${selectedSize})
-        Price: ${discountedPrice} EGP (15% off)
-        Check it here: ${window.location.origin}/product/${product.id}`
+            `Hi, I want to order this poster:
+
+${product.name} (${selectedSize})
+Color: ${colorOptions.find(c => c.name === selectedColor)?.label} ${selectedColor === 'black' ? '🖤' : selectedColor === 'white' ? '🤍' : '🤎'}
+Price: ${discountedPrice} EGP + 80 EGP shipping = ${discountedPrice + 80} EGP total
+
+Link: ${window.location.origin}/product/${product.id}
+
+Please confirm my order.`
           )}`}
             target="_blank"
             rel="noopener noreferrer"

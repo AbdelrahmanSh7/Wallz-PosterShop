@@ -6,21 +6,24 @@ import Category from "./components/Category/Category";
 import Home from './components/Home/Home';
 import Product from './components/Product/Product';
 import Shop from './components/Shop';
+import Cart from './components/Cart';
 import Footer from './components/Footer/Footer';
 
 function AppContent() {
   const location = useLocation();
   const isProductPage = location.pathname.startsWith('/product/');
   const isShopPage = location.pathname.startsWith('/shop');
+  const isCartPage = location.pathname === '/cart';
   return (
     <>
       <Navbar />
-      {!isProductPage && !isShopPage && <CategorySlider />}
+      {!isProductPage && !isShopPage && !isCartPage && <CategorySlider />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/category/:categoryId" element={<Category />} />
         <Route path="/product/:productId" element={<Product />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/cart" element={<Cart />} />
       </Routes>
       <Footer />
     </>

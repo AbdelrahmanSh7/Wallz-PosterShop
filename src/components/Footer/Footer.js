@@ -11,7 +11,7 @@ const Footer = () => (
       <a href="https://www.tiktok.com/@wallz.eg?_t=ZS-8yGml8Ch0K1&_r=1" target="_blank" rel="noopener noreferrer">
         <FaTiktok />
       </a>
-      <a href="https://wa.me/201100643834" target="_blank" rel="noopener noreferrer">
+      <a href="https://wa.me/201112659808" target="_blank" rel="noopener noreferrer">
         <FaWhatsapp />  
       </a>
       <a href="https://www.facebook.com/profile.php?id=61578285524597" target="_blank" rel="noopener noreferrer">
