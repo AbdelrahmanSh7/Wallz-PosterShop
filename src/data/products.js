@@ -15,7 +15,7 @@ export const categories = [
   {
     id: "player-vibes",
     name: "Player Vibes",
-    image: "/Player Vibes/4.jpg",
+    image: "/Player Vibes/29.jpg",
     description: "Sports players posters"
   },
   {
@@ -33,7 +33,7 @@ export const categories = [
   {
     id: "automotive",
     name: "Automotive",
-    image: "/Automotive/3.jpg",
+    image: "/Automotive/24.jpg",
     description: "Car posters"
   },
   {
@@ -310,6 +310,58 @@ export const products = [
 
   // Player Vibes Category
   {
+    id: "player-vibes-29",
+    categoryId: "player-vibes",
+    name: "Cristiano Ronaldo", 
+    price: 280,
+    image: "/Player Vibes/29.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "player-vibes-28",
+    categoryId: "player-vibes",
+    name: "Bellingham", 
+    price: 280,
+    image: "/Player Vibes/28.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "player-vibes-30",
+    categoryId: "player-vibes",
+    name: "Messi", 
+    price: 280,
+    image: "/Player Vibes/30.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "player-vibes-31",
+    categoryId: "player-vibes",
+    name: "Lamine Yamal", 
+    price: 280,
+    image: "/Player Vibes/31.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
     id: "player-vibes-1",
     categoryId: "player-vibes",
     name: "Salah", 
@@ -364,7 +416,7 @@ export const products = [
   {
     id: "player-vibes-5",
     categoryId: "player-vibes",
-    name: "Ronaldo", 
+    name: "Salah", 
     price: 280,
     image: "/Player Vibes/5.jpg",
     sizes: [
@@ -1174,6 +1226,97 @@ export const products = [
   
 
   // Automotive Category
+  {
+    id: "automotive-25",
+    categoryId: "automotive",
+    name: "Porsche 911",
+    price: 280,
+    image: "/Automotive/25.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-26",
+    categoryId: "automotive",
+    name: "LBWK",
+    price: 280,
+    image: "/Automotive/26.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-27",
+    categoryId: "automotive",
+    name: "Nissan GTR",
+    price: 280,
+    image: "/Automotive/27.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-28",
+    categoryId: "automotive",
+    name: "Mclaren",
+    price: 280,
+    image: "/Automotive/28.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-29",
+    categoryId: "automotive",
+    name: "Prgani",
+    price: 280,
+    image: "/Automotive/29.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-30",
+    categoryId: "automotive",
+    name: "BMW",
+    price: 280,
+    image: "/Automotive/30.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
+  {
+    id: "automotive-31",
+    categoryId: "automotive",
+    name: "Porsche",
+    price: 280,
+    image: "/Automotive/31.jpg",
+    sizes: [
+      { name: "Small", price: 230, dimensions: "20x30 cm" },
+      { name: "Medium", price: 280, dimensions: "30x40 cm" },
+      { name: "Large", price: 370, dimensions: "40x50 cm" }
+    ],
+    inStock: true
+  },
   {
     id: "automotive-1",
     categoryId: "automotive",
