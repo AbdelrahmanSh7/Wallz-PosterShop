@@ -1,13 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { FaWhatsapp, FaTrash, FaShoppingCart, FaTruck } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaTrash, FaShoppingCart, FaCheckCircle } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { sendNewOrderNotification } from '../../utils/emailService';
+import { GOVERNORATES, getShippingCost } from '../../data/governorates';
 import './Cart.css';
 
 function Cart() {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [shippingCost] = useState(80);
+  const [shippingCost, setShippingCost] = useState(80);
   const [finalTotal, setFinalTotal] = useState(0);
+  
+  // Customer data form state
+  const [customerData, setCustomerData] = useState({
+    fullName: '',
+    governorate: '',
+    address: '',
+    phone1: '',
+    phone2: ''
+  });
+  const [showCustomerForm, setShowCustomerForm] = useState(true);
+  const [showAlert, setShowAlert] = useState(false);
+
+  // Calculate totals whenever cart changes
+  const calculateTotals = useCallback((items) => {
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    setTotalPrice(subtotal);
+    setFinalTotal(subtotal + shippingCost);
+  }, [shippingCost]);
 
   // Load cart items from localStorage on component mount
   useEffect(() => {
@@ -17,13 +38,12 @@ function Cart() {
       setCartItems(items);
       calculateTotals(items);
     }
-  }, []);
+  }, [calculateTotals]);
 
-  // Calculate totals whenever cart changes
-  const calculateTotals = (items) => {
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    setTotalPrice(subtotal);
-    setFinalTotal(subtotal + shippingCost);
+  // Update shipping cost when governorate changes
+  const updateShippingCost = (governorateValue) => {
+    const newShippingCost = getShippingCost(governorateValue);
+    setShippingCost(newShippingCost);
   };
 
   // Update quantity
@@ -55,36 +75,84 @@ function Cart() {
     setFinalTotal(0);
   };
 
-  // Generate WhatsApp message for multiple orders
-  const generateWhatsAppMessage = () => {
-    if (cartItems.length === 0) return '';
-
-    let message = `Hi, I want to order multiple posters:\n\n`;
+  // Handle customer data input
+  const handleCustomerDataChange = (e) => {
+    const { name, value } = e.target;
+    setCustomerData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
-    cartItems.forEach((item, index) => {
-      message += `${index + 1}. ${item.category} : ${item.name} (${item.size})\n`;
-      message += `   Color: ${item.color} ${item.color === 'Classic Black' ? '🖤' : item.color === 'Pure White' ? '🤍' : '🤎'}\n`;
-      message += `   Quantity: ${item.quantity}\n`;
-      message += `   Price: ${item.price} EGP x ${item.quantity} = ${item.price * item.quantity} EGP\n`;
-      message += `   Link: ${window.location.origin}/product/${item.productId}\n\n`;
-    });
-
-    message += `📊 Order Summary:\n`;
-    message += `Subtotal: ${totalPrice} EGP\n`;
-    message += `Shipping: +${shippingCost} EGP\n`;
-    message += `Final Total: ${finalTotal} EGP\n\n`;
-    message += `🚚 Shipping Details: +${shippingCost} EGP\n`;
-    message += `📍 Delivery to your address\n\n`;
-    message += `Please confirm my order.`;
-
-    return message;
+    // Update shipping cost when governorate changes
+    if (name === 'governorate') {
+      updateShippingCost(value);
+    }
   };
 
-  // Handle WhatsApp order
-  const handleWhatsAppOrder = () => {
-    const message = generateWhatsAppMessage();
-    const whatsappUrl = `https://wa.me/201112659808?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+  // Validate customer data
+  const validateCustomerData = () => {
+    const { fullName, governorate, address, phone1 } = customerData;
+    return fullName.trim() && governorate.trim() && address.trim() && phone1.trim();
+  };
+
+  // Save order to localStorage
+  const saveOrder = () => {
+    if (!validateCustomerData()) {
+      alert('يجب املاء الفراغات');
+      return;
+    }
+
+    const order = {
+      id: Date.now().toString(),
+      customer: customerData,
+      items: cartItems,
+      subtotal: totalPrice,
+      shipping: shippingCost,
+      total: finalTotal,
+      orderDate: new Date().toISOString(),
+      status: 'pending'
+    };
+
+    // Get existing orders
+    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    existingOrders.push(order);
+    localStorage.setItem('orders', JSON.stringify(existingOrders));
+
+    // Send email notification
+    sendNewOrderNotification(order).then(result => {
+      if (result.success) {
+        console.log('Order notification email sent successfully');
+      } else {
+        console.error('Failed to send order notification email:', result.error);
+      }
+    });
+
+    // Clear cart and form
+    clearCart();
+    setCustomerData({
+      fullName: '',
+      governorate: '',
+      address: '',
+      phone1: '',
+      phone2: ''
+    });
+    setShowCustomerForm(false);
+
+  };
+
+
+  // Handle Submit order
+  const handleSubmitOrder = () => {
+    if (!validateCustomerData()) {
+      setShowCustomerForm(true);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+    
+    // Save order and redirect to confirmation page
+    saveOrder();
+    navigate('/order-confirmation');
   };
 
   if (cartItems.length === 0) {
@@ -172,41 +240,144 @@ function Cart() {
         <div className="cart-summary">
           <h3>Order Summary</h3>
           
-          <div className="summary-row">
-            <span>Items ({cartItems.length}):</span>
-            <span>{totalPrice} EGP</span>
+          {/* Items List */}
+          <div className="order-items-list">
+            {cartItems.map((item, index) => (
+              <div key={index} className="order-item-card">
+                <div className="item-bar"></div>
+                <div className="item-content">
+                  <div className="item-info">
+                    <h4 className="item-name">{item.name}</h4>
+                    <p className="item-category">{item.category}</p>
+                    <p className="item-details">Size: {item.size} | Color: {item.color} | Quantity: {item.quantity}</p>
+                  </div>
+                  <div className="item-pricing">
+                    <p className="item-price-breakdown">{item.price} EGP × {item.quantity} =</p>
+                    <p className="item-total-price">{item.price * item.quantity} EGP</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           
-          <div className="summary-row shipping">
-            <span>
-              <FaTruck /> Shipping
-            </span>
-            <span>+{shippingCost} EGP</span>
+          {/* Cost Summary */}
+          <div className="cost-summary">
+            <div className="summary-row">
+              <span>Subtotal:</span>
+              <span>{totalPrice} EGP</span>
+            </div>
+            
+            <div className="summary-row shipping">
+              <span>Shipping ({customerData.governorate ? GOVERNORATES.find(g => g.value === customerData.governorate)?.name || 'المحافظة' : 'المحافظة'}):</span>
+              <span>+{shippingCost} EGP</span>
+            </div>
+            
+            <div className="summary-divider"></div>
+            
+            <div className="summary-row total">
+              <span>Total:</span>
+              <span>{finalTotal} EGP</span>
+            </div>
           </div>
-          
-          <div className="summary-row total">
-            <span>Total:</span>
-            <span>{finalTotal} EGP</span>
-          </div>
+
+          {/* Customer Data Form */}
+          {showCustomerForm && (
+            <div className="customer-form">
+              <h4>ادخل بياناتك</h4>
+              <div className="form-group">
+                <label>الاسم الكامل *</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={customerData.fullName}
+                  onChange={handleCustomerDataChange}
+                  placeholder="أدخل اسمك الكامل"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>المحافظة *</label>
+                <select
+                  name="governorate"
+                  value={customerData.governorate}
+                  onChange={handleCustomerDataChange}
+                  required
+                  className="governorate-select"
+                >
+                  <option value="">اختر المحافظة</option>
+                  {GOVERNORATES.map((governorate) => (
+                    <option key={governorate.value} value={governorate.value}>
+                      {governorate.name} - {governorate.shipping} جنيه
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>العنوان التفصيلي *</label>
+                <textarea
+                  name="address"
+                  value={customerData.address}
+                  onChange={handleCustomerDataChange}
+                  placeholder="أدخل العنوان التفصيلي"
+                  rows="3"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>رقم التليفون *</label>
+                <input
+                  type="tel"
+                  name="phone1"
+                  value={customerData.phone1}
+                  onChange={handleCustomerDataChange}
+                  placeholder="رقم التليفون الأساسي"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>رقم التليفون البديل* </label>
+                <input
+                  type="tel"
+                  name="phone2"
+                  value={customerData.phone2}
+                  onChange={handleCustomerDataChange}
+                  placeholder="رقم تليفون إضافي"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="cart-actions">
             <button onClick={clearCart} className="clear-cart-btn">
               Clear Cart
             </button>
-            <button onClick={handleWhatsAppOrder} className="order-whatsapp-btn">
-              <FaWhatsapp />
-              Order via WhatsApp
+            <button onClick={handleSubmitOrder} className="submit-order-btn">
+              <FaCheckCircle />
+              Submit
             </button>
           </div>
 
           <div className="shipping-info">
             <h4>🚚 Shipping Information</h4>
-            <p>• Shipping cost: {shippingCost} EGP</p>
-            <p>• Delivery to your address</p>
-            <p>• Estimated delivery: 2-5 business days</p>
+            <p>• Shipping Cost: {shippingCost} EGP</p>
+            <p>• Delivery to the mentioned address</p>
+            <p>• Expected Delivery Time: 2-6 working days</p>
           </div>
         </div>
       </div>
+      
+      {/* Custom Alert */}
+      {showAlert && (
+        <div className="custom-alert">
+          <div className="alert-content">
+            <span>Please fill in the blanks</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

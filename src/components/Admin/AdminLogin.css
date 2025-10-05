@@ -1,0 +1,260 @@
+/* Admin Login Styles */
+.admin-login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2c2c2c 0%, #404040 100%);
+  padding: 20px;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><filter id="blur"><feGaussianBlur stdDeviation="1"/></filter></defs><rect width="100" height="100" fill="%23333" filter="url(%23blur)"/></svg>');
+  filter: blur(2px);
+  opacity: 0.3;
+}
+
+/* Modal version styles */
+.login-modal-content .admin-login-container {
+  min-height: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.login-modal-content .admin-login-container::before {
+  display: none;
+}
+
+.admin-login-card {
+  background: #f8f9fa;
+  border-radius: 25px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  width: 100%;
+  max-width: 450px;
+  animation: slideUp 0.6s ease-out;
+  border: 1px solid #e0e0e0;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-login-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.admin-login-header h1 {
+  font-size: 1.6em;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+.admin-login-form {
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  right: 18px;
+  color: #555;
+  font-size: 1.2em;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 18px 55px 18px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+  background: #e9ecef;
+  color: #333;
+  min-height: 50px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Special styling for password field */
+.form-group:has(input[type="password"]), 
+.form-group:has(input[type="text"][name="password"]) {
+  position: relative;
+}
+
+.form-group:has(input[type="password"]) input, 
+.form-group:has(input[type="text"][name="password"]) input {
+  padding: 18px 55px 18px 20px;
+}
+
+.form-group input::placeholder {
+  color: #555;
+  font-weight: 500;
+  font-size: 1.05em;
+}
+
+.form-group input:focus {
+  outline: none;
+  background: #f8f9fa;
+  box-shadow: 0 0 0 2px #e1306c;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 5px;
+  transition: color 0.3s ease;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: #e1306c;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
+  border-left: 4px solid #c62828;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px 25px;
+  background: #f8f9fa;
+  color: #111;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1em;
+  transition: all 0.3s ease;
+  margin-bottom: 18px;
+}
+
+.login-btn:hover {
+  background: #e9ecef;
+  border-color: #bbb;
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-options {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #e1306c;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 2px solid #ddd;
+  border-radius: 3px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+}
+
+.remember-me input[type="checkbox"]:checked {
+  background: #e1306c;
+  border-color: #e1306c;
+}
+
+.remember-me input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.remember-me label {
+  font-size: 0.9em;
+  color: #333;
+  cursor: pointer;
+}
+
+
+
+
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .admin-login-container {
+    padding: 15px;
+  }
+  
+  .admin-login-card {
+    padding: 30px 25px;
+  }
+  
+  .admin-login-header h1 {
+    font-size: 1.7em;
+  }
+  
+  .form-group input {
+    padding: 12px 12px 12px 40px;
+  }
+  
+  .login-btn {
+    padding: 12px 20px;
+    font-size: 1em;
+  }
+}

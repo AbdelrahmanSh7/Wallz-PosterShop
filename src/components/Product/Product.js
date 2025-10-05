@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getProductById, getCategoryById } from '../../data/products';
-import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
+import { FaInstagram, FaCheckCircle } from 'react-icons/fa';
 import './Product.css';
 
 function Product() {
@@ -171,34 +171,42 @@ function Product() {
             🛒 Add to Cart
           </button>
           
-          <a
-           href={`https://wa.me/201112659808?text=${encodeURIComponent(
-            `Hi, I want to order this poster:
-
-${product.name} (${selectedSize})
-Color: ${colorOptions.find(c => c.name === selectedColor)?.label} ${selectedColor === 'black' ? '🖤' : selectedColor === 'white' ? '🤍' : '🤎'}
-Price: ${discountedPrice} EGP + 80 EGP shipping = ${discountedPrice + 80} EGP total
-
-Link: ${window.location.origin}/product/${product.id}
-
-Please confirm my order.`
-          )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="calm-whatsapp-btn"
+          <button 
+            onClick={() => {
+              const cartItem = {
+                id: `${product.id}-${selectedSize}-${selectedColor}`,
+                productId: product.id,
+                name: product.name,
+                category: category?.name,
+                size: selectedSize,
+                color: colorOptions.find(c => c.name === selectedColor)?.label,
+                price: discountedPrice,
+                image: product.image,
+                quantity: 1
+              };
+              
+              const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+              const existingItemIndex = existingCart.findIndex(item => item.id === cartItem.id);
+              
+              if (existingItemIndex >= 0) {
+                existingCart[existingItemIndex].quantity += 1;
+              } else {
+                existingCart.push(cartItem);
+              }
+              
+              localStorage.setItem('cart', JSON.stringify(existingCart));
+              
+              // Dispatch custom event to update navbar cart count
+              window.dispatchEvent(new CustomEvent('cartUpdated'));
+              
+              // Navigate to cart
+              window.location.href = '/cart';
+            }}
+            className="confirm-order-btn"
           >
-            <FaWhatsapp className="btn-icon" />
-            Order via WhatsApp
-          </a>
-          <a
-            href="https://www.instagram.com/wallz_eg/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="calm-instagram-btn"
-          >
-            <FaInstagram className="btn-icon" />
-            Message on Instagram
-          </a>
+            <FaCheckCircle className="btn-icon" />
+            Confirm Order
+          </button>
         </div>
       </div>
     </div>
