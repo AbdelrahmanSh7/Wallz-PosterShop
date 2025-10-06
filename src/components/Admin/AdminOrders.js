@@ -17,8 +17,9 @@ import {
 } from 'react-icons/fa';
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
-import dataSync from '../../utils/dataSync';
-import crossDeviceSync from '../../utils/crossDeviceSync';
+import firebaseService from '../../services/firebaseService';
+import simpleNotification from '../../utils/simpleNotification';
+import { testFirebaseConnection } from '../../utils/firebaseTest';
 import './AdminOrders.css';
 
 function AdminOrders() {
@@ -40,71 +41,56 @@ function AdminOrders() {
     }
   }, [navigate]);
 
-  // Load orders from localStorage
+  // Load orders from Firebase
   useEffect(() => {
-    const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    setOrders(savedOrders);
-    setFilteredOrders(savedOrders);
+    const loadOrders = async () => {
+      // Test Firebase connection first
+      const connectionTest = await testFirebaseConnection();
+      if (!connectionTest.success) {
+        console.error('❌ Firebase connection failed:', connectionTest.error);
+        alert('Firebase connection failed. Please check your configuration.');
+        return;
+      }
+
+      const result = await firebaseService.getOrders();
+      if (result.success) {
+        setOrders(result.orders);
+        setFilteredOrders(result.orders);
+        console.log('✅ Orders loaded from Firebase:', result.orders.length);
+      } else {
+        console.error('❌ Failed to load orders from Firebase:', result.error);
+        // Fallback to localStorage
+        const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        setOrders(savedOrders);
+        setFilteredOrders(savedOrders);
+      }
+    };
+
+    loadOrders();
   }, []);
 
-  // Listen for data synchronization updates
+  // Listen for Firebase real-time updates
   useEffect(() => {
-    const handleOrdersUpdate = (event) => {
-      console.log('Orders update received:', event.detail);
+    const handleFirebaseUpdate = (event) => {
+      console.log('🔥 Firebase orders updated:', event.detail.orders.length);
       
-      // Reload orders from localStorage
-      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      setOrders(updatedOrders);
+      setOrders(event.detail.orders);
+      setFilteredOrders(event.detail.orders);
       
       // Show notification for new orders
-      if (event.detail.type === 'NEW_ORDER') {
-        const order = event.detail.order;
-        const customerName = order.customer?.fullName || order.customerData?.fullName || 'Unknown';
-        console.log(`New order received: ${customerName}`);
+      if (event.detail.orders.length > orders.length) {
+        console.log('🛍️ New order detected via Firebase!');
       }
     };
 
-    // Handle cross-device sync updates
-    const handleCrossDeviceSync = (event) => {
-      console.log('Cross-device sync update:', event.detail);
-      
-      // Reload orders from localStorage
-      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      setOrders(updatedOrders);
-      
-      // Show notification
-      if (event.detail.type === 'SYNC_UPDATE') {
-        console.log('Orders synced from another device');
-      }
-    };
-
-    // Handle refresh requests
-    const handleOrdersRefresh = (event) => {
-      console.log('Orders refresh requested:', event.detail);
-      
-      // Reload orders from localStorage
-      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      setOrders(updatedOrders);
-    };
-
-    // Add event listeners
-    window.addEventListener('ordersUpdated', handleOrdersUpdate);
-    window.addEventListener('crossDeviceSync', handleCrossDeviceSync);
-    window.addEventListener('ordersRefresh', handleOrdersRefresh);
-
-    // Request notification permission
-    dataSync.requestNotificationPermission();
-
-    // Start cross-device sync
-    crossDeviceSync.forceSync();
+    // Add event listener
+    window.addEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
 
     // Cleanup
     return () => {
-      window.removeEventListener('ordersUpdated', handleOrdersUpdate);
-      window.removeEventListener('crossDeviceSync', handleCrossDeviceSync);
-      window.removeEventListener('ordersRefresh', handleOrdersRefresh);
+      window.removeEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
     };
-  }, []);
+  }, [orders.length]);
 
   // Auto-export to Excel every 5 minutes
   useEffect(() => {
@@ -254,42 +240,53 @@ function AdminOrders() {
     setFilteredOrders(sorted);
   }, [orders, searchTerm, statusFilter, sortBy]);
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     const order = orders.find(order => order.id === orderId);
     const oldStatus = order?.status;
     
-    const updatedOrders = orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-
-    // Broadcast order update to other devices
-    const updatedOrder = updatedOrders.find(o => o.id === orderId);
-    if (updatedOrder) {
-      dataSync.broadcastOrderUpdate(updatedOrder);
-    }
-
-    // Send status update notification
-    if (order && oldStatus !== newStatus) {
-      sendStatusUpdateNotification(order, oldStatus, newStatus).then(result => {
-        if (result.success) {
-          console.log('Status update notification sent successfully');
-        } else {
-          console.error('Failed to send status update notification:', result.error);
-        }
-      });
+    // Update in Firebase
+    const firebaseResult = await firebaseService.updateOrderStatus(orderId, newStatus);
+    
+    if (firebaseResult.success) {
+      console.log(`✅ Order ${orderId} status updated to ${newStatus} in Firebase`);
+      
+      // Also update localStorage as backup
+      const updatedOrders = orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      );
+      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      
+      // Send status update notification
+      if (order && oldStatus !== newStatus) {
+        sendStatusUpdateNotification(order, oldStatus, newStatus).then(result => {
+          if (result.success) {
+            console.log('Status update notification sent successfully');
+          } else {
+            console.error('Failed to send status update notification:', result.error);
+          }
+        });
+      }
+    } else {
+      console.error('❌ Failed to update order status in Firebase:', firebaseResult.error);
+      alert('حدث خطأ في تحديث حالة الطلب. يرجى المحاولة مرة أخرى.');
     }
   };
 
-  const deleteOrder = (orderId) => {
+  const deleteOrder = async (orderId) => {
     if (window.confirm('Are you sure you want to delete this order?')) {
-      const updatedOrders = orders.filter(order => order.id !== orderId);
-      setOrders(updatedOrders);
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      // Delete from Firebase
+      const firebaseResult = await firebaseService.deleteOrder(orderId);
       
-      // Broadcast order deletion to other devices
-      dataSync.broadcastOrderDelete(orderId);
+      if (firebaseResult.success) {
+        console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
+        
+        // Also update localStorage as backup
+        const updatedOrders = orders.filter(order => order.id !== orderId);
+        localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      } else {
+        console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
+        alert('حدث خطأ في حذف الطلب. يرجى المحاولة مرة أخرى.');
+      }
     }
   };
 
@@ -300,16 +297,29 @@ function AdminOrders() {
   };
 
   // Manual refresh function
-  const handleManualRefresh = () => {
-    console.log('Manual refresh triggered');
-    crossDeviceSync.forceSync();
+  const handleManualRefresh = async () => {
+    console.log('🔄 Manual refresh triggered');
     
-    // Reload orders from localStorage
-    const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    setOrders(updatedOrders);
+    // Reload orders from Firebase
+    const result = await firebaseService.getOrders();
     
-    // Show success message
-    alert('Orders refreshed successfully!');
+    if (result.success) {
+      setOrders(result.orders);
+      setFilteredOrders(result.orders);
+      
+      // Show success message
+      alert(`✅ Orders refreshed successfully!\nFound ${result.orders.length} orders from Firebase.`);
+      console.log(`✅ Found ${result.orders.length} orders from Firebase`);
+    } else {
+      console.error('❌ Failed to refresh orders from Firebase:', result.error);
+      
+      // Fallback to localStorage
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(updatedOrders);
+      setFilteredOrders(updatedOrders);
+      
+      alert(`⚠️ Firebase unavailable, using local data.\nFound ${updatedOrders.length} orders.`);
+    }
   };
 
   const formatDate = (dateString) => {

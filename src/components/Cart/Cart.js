@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaTrash, FaShoppingCart, FaCheckCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { GOVERNORATES, getShippingCost } from '../../data/governorates';
-import dataSync from '../../utils/dataSync';
-import crossDeviceSync from '../../utils/crossDeviceSync';
+import firebaseService from '../../services/firebaseService';
+import simpleNotification from '../../utils/simpleNotification';
 import './Cart.css';
 
 function Cart() {
@@ -97,7 +97,7 @@ function Cart() {
   };
 
   // Save order to localStorage
-  const saveOrder = () => {
+  const saveOrder = async () => {
     if (!validateCustomerData()) {
       alert('يجب املاء الفراغات');
       return;
@@ -114,22 +114,24 @@ function Cart() {
       status: 'pending'
     };
 
-    // Get existing orders
-    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    existingOrders.push(order);
-    localStorage.setItem('orders', JSON.stringify(existingOrders));
-
-    // Broadcast new order to other devices (same browser)
-    dataSync.broadcastNewOrder(order);
-
-    // Send enhanced cross-device notification
-    crossDeviceSync.sendEnhancedNotification(order).then(result => {
-      if (result && result.success) {
-        console.log('Cross-device notification sent successfully');
-      } else {
-        console.error('Failed to send cross-device notification:', result?.error);
-      }
-    });
+    // Save to Firebase
+    const firebaseResult = await firebaseService.addOrder(order);
+    
+    if (firebaseResult.success) {
+      console.log('✅ Order saved to Firebase successfully');
+      
+      // Also save to localStorage as backup
+      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      existingOrders.push(order);
+      localStorage.setItem('orders', JSON.stringify(existingOrders));
+      
+      // Trigger new order notification
+      simpleNotification.triggerNewOrderEvent(order);
+    } else {
+      console.error('❌ Failed to save order to Firebase:', firebaseResult.error);
+      alert('حدث خطأ في حفظ الطلب. يرجى المحاولة مرة أخرى.');
+      return;
+    }
 
     // Clear cart and form
     clearCart();
