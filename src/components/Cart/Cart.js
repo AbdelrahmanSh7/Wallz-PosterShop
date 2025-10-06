@@ -33,12 +33,55 @@ function Cart() {
 
   // Load cart items from localStorage on component mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      const items = JSON.parse(savedCart);
-      setCartItems(items);
-      calculateTotals(items);
-    }
+    const loadCartItems = () => {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          const items = JSON.parse(savedCart);
+          setCartItems(items);
+          calculateTotals(items);
+        } catch (error) {
+          console.error('Error parsing cart data:', error);
+          setCartItems([]);
+          setTotalPrice(0);
+          setFinalTotal(0);
+        }
+      } else {
+        setCartItems([]);
+        setTotalPrice(0);
+        setFinalTotal(0);
+      }
+    };
+
+    // Load cart items initially
+    loadCartItems();
+
+    // Listen for storage changes (when cart is updated from other tabs/components)
+    const handleStorageChange = (e) => {
+      if (e.key === 'cart') {
+        loadCartItems();
+      }
+    };
+
+    // Listen for custom cart update events
+    const handleCartUpdate = () => {
+      loadCartItems();
+    };
+
+    // Listen for focus events (when user returns to tab)
+    const handleFocus = () => {
+      loadCartItems();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [calculateTotals]);
 
   // Update shipping cost when governorate changes
@@ -46,6 +89,7 @@ function Cart() {
     const newShippingCost = getShippingCost(governorateValue);
     setShippingCost(newShippingCost);
   };
+
 
   // Update quantity
   const updateQuantity = (itemId, newQuantity) => {
@@ -58,6 +102,9 @@ function Cart() {
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     calculateTotals(updatedCart);
+    
+    // Trigger cart update event
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
   };
 
   // Remove item from cart
@@ -66,6 +113,9 @@ function Cart() {
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     calculateTotals(updatedCart);
+    
+    // Trigger cart update event
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
   };
 
   // Clear entire cart
@@ -74,6 +124,9 @@ function Cart() {
     localStorage.removeItem('cart');
     setTotalPrice(0);
     setFinalTotal(0);
+    
+    // Trigger cart update event
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
   };
 
   // Handle customer data input
@@ -99,7 +152,8 @@ function Cart() {
   // Save order to localStorage
   const saveOrder = async () => {
     if (!validateCustomerData()) {
-      alert('يجب املاء الفراغات');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
       return;
     }
 
@@ -266,26 +320,6 @@ function Cart() {
             ))}
           </div>
           
-          {/* Cost Summary */}
-          <div className="cost-summary">
-            <div className="summary-row">
-              <span>Subtotal:</span>
-              <span>{totalPrice} EGP</span>
-            </div>
-            
-            <div className="summary-row shipping">
-              <span>Shipping ({customerData.governorate ? GOVERNORATES.find(g => g.value === customerData.governorate)?.name || 'المحافظة' : 'المحافظة'}):</span>
-              <span>+{shippingCost} EGP</span>
-            </div>
-            
-            <div className="summary-divider"></div>
-            
-            <div className="summary-row total">
-              <span>Total:</span>
-              <span>{finalTotal} EGP</span>
-            </div>
-          </div>
-
           {/* Customer Data Form */}
           {showCustomerForm && (
             <div className="customer-form">
@@ -314,7 +348,7 @@ function Cart() {
                   <option value="">اختر المحافظة</option>
                   {GOVERNORATES.map((governorate) => (
                     <option key={governorate.value} value={governorate.value}>
-                      {governorate.name} - {governorate.shipping} جنيه
+                      {governorate.name}
                     </option>
                   ))}
                 </select>
@@ -345,7 +379,7 @@ function Cart() {
               </div>
               
               <div className="form-group">
-                <label>رقم التليفون البديل* </label>
+                <label>رقم التليفون البديل</label>
                 <input
                   type="tel"
                   name="phone2"
@@ -356,6 +390,28 @@ function Cart() {
               </div>
             </div>
           )}
+
+          {/* Cost Summary - Now after customer form */}
+          <div className="cost-summary">
+            <div className="summary-row">
+              <span>Subtotal:</span>
+              <span>{totalPrice} EGP</span>
+            </div>
+            
+            <div className="summary-row shipping">
+              <span>Shipping: {customerData.governorate ? GOVERNORATES.find(g => g.value === customerData.governorate)?.name : '??'}</span>
+              <span>+{shippingCost} EGP</span>
+            </div>
+            
+            <div className="summary-divider"></div>
+            
+            {(customerData.fullName && customerData.governorate && customerData.address && customerData.phone1) && (
+              <div className="summary-row total">
+                <span>Total:</span>
+                <span>{finalTotal} EGP</span>
+              </div>
+            )}
+          </div>
 
           <div className="cart-actions">
             <button onClick={clearCart} className="clear-cart-btn">
@@ -380,7 +436,7 @@ function Cart() {
       {showAlert && (
         <div className="custom-alert">
           <div className="alert-content">
-            <span>Please fill in the blanks</span>
+            <span>⚠️ يرجى ملء جميع البيانات المطلوبة</span>
           </div>
         </div>
       )}

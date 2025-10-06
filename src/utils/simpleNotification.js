@@ -173,11 +173,11 @@ class SimpleNotification {
   // Send email notification
   async sendEmailNotification(orderData) {
     try {
-      const { sendNewOrderNotification } = await import('./emailService');
+      const { sendNewOrderNotification } = await import('./simpleEmailService');
       const result = await sendNewOrderNotification(orderData);
       
       if (result.success) {
-        console.log('✅ Email notification sent successfully');
+        console.log('✅ Email notification sent successfully via', result.method);
       } else {
         console.error('❌ Failed to send email notification:', result.error);
       }

@@ -113,7 +113,10 @@ const Navbar = () => {
           <a href="/" className="navbar__link">Categories</a>
           <a href="#footer" className="navbar__link">Contact</a>
           {isAdminLoggedIn && (
-            <Link to="/admin/orders" className="navbar__link admin-link">Admin Panel</Link>
+            <>
+              <span className="admin-status">Admin</span>
+              <Link to="/admin/orders" className="navbar__link admin-link">Admin Panel</Link>
+            </>
           )}
         </div>
         <div className="navbar__right">
@@ -123,9 +126,9 @@ const Navbar = () => {
             {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
           </span>
           {isAdminLoggedIn ? (
-            <span className="navbar__icon" style={{ cursor: 'pointer' }} onClick={handleLogout} title="Logout">
-              <FiUser />
-            </span>
+            <button className="logout-btn" onClick={handleLogout} title="Logout">
+              Logout
+            </button>
           ) : (
             <span className="navbar__icon" style={{ cursor: 'pointer' }} onClick={handleUserClick}><FiUser /></span>
           )}

@@ -10,7 +10,6 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaTrash,
-  FaSignOutAlt,
   FaFilter,
   FaSearch,
   FaFileExcel
@@ -274,27 +273,36 @@ function AdminOrders() {
 
   const deleteOrder = async (orderId) => {
     if (window.confirm('Are you sure you want to delete this order?')) {
-      // Delete from Firebase
-      const firebaseResult = await firebaseService.deleteOrder(orderId);
-      
-      if (firebaseResult.success) {
-        console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
+      try {
+        console.log('🗑️ Attempting to delete order:', orderId);
         
-        // Also update localStorage as backup
-        const updatedOrders = orders.filter(order => order.id !== orderId);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-      } else {
-        console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
+        // Delete from Firebase
+        const firebaseResult = await firebaseService.deleteOrder(orderId);
+        console.log('Firebase delete result:', firebaseResult);
+        
+        if (firebaseResult.success) {
+          console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
+          
+          // Update local state immediately
+          const updatedOrders = orders.filter(order => order.id !== orderId);
+          setOrders(updatedOrders);
+          setFilteredOrders(updatedOrders);
+          
+          // Also update localStorage as backup
+          localStorage.setItem('orders', JSON.stringify(updatedOrders));
+          
+          alert('تم حذف الطلب بنجاح');
+        } else {
+          console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
+          alert('حدث خطأ في حذف الطلب من Firebase. يرجى المحاولة مرة أخرى.');
+        }
+      } catch (error) {
+        console.error('❌ Error deleting order:', error);
         alert('حدث خطأ في حذف الطلب. يرجى المحاولة مرة أخرى.');
       }
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminLoggedIn');
-    localStorage.removeItem('adminLoginTime');
-    navigate('/admin/login');
-  };
 
   // Manual refresh function
   const handleManualRefresh = async () => {
@@ -475,10 +483,6 @@ function AdminOrders() {
               </div>
             </div>
           </div>
-          <button onClick={handleLogout} className="logout-btn">
-            <FaSignOutAlt />
-            Logout
-          </button>
         </div>
       </div>
 
