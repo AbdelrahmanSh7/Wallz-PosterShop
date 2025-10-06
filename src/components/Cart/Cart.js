@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaTrash, FaShoppingCart, FaCheckCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import { sendNewOrderNotification } from '../../utils/emailService';
 import { GOVERNORATES, getShippingCost } from '../../data/governorates';
+import dataSync from '../../utils/dataSync';
+import notificationService from '../../utils/notificationService';
 import './Cart.css';
 
 function Cart() {
@@ -118,12 +119,15 @@ function Cart() {
     existingOrders.push(order);
     localStorage.setItem('orders', JSON.stringify(existingOrders));
 
-    // Send email notification
-    sendNewOrderNotification(order).then(result => {
+    // Broadcast new order to other devices
+    dataSync.broadcastNewOrder(order);
+
+    // Send enhanced notification (email + retry mechanism)
+    notificationService.sendNotification('NEW_ORDER', order).then(result => {
       if (result.success) {
-        console.log('Order notification email sent successfully');
+        console.log('Order notification sent successfully');
       } else {
-        console.error('Failed to send order notification email:', result.error);
+        console.error('Failed to send order notification:', result.error);
       }
     });
 

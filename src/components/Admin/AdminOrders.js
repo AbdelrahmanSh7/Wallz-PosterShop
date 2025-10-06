@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa';
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
+import dataSync from '../../utils/dataSync';
 import './AdminOrders.css';
 
 function AdminOrders() {
@@ -43,6 +44,35 @@ function AdminOrders() {
     const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
     setOrders(savedOrders);
     setFilteredOrders(savedOrders);
+  }, []);
+
+  // Listen for data synchronization updates
+  useEffect(() => {
+    const handleOrdersUpdate = (event) => {
+      console.log('Orders update received:', event.detail);
+      
+      // Reload orders from localStorage
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(updatedOrders);
+      
+      // Show notification for new orders
+      if (event.detail.type === 'NEW_ORDER') {
+        const order = event.detail.order;
+        const customerName = order.customer?.fullName || order.customerData?.fullName || 'Unknown';
+        console.log(`New order received: ${customerName}`);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('ordersUpdated', handleOrdersUpdate);
+
+    // Request notification permission
+    dataSync.requestNotificationPermission();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('ordersUpdated', handleOrdersUpdate);
+    };
   }, []);
 
   // Auto-export to Excel every 5 minutes
@@ -203,6 +233,12 @@ function AdminOrders() {
     setOrders(updatedOrders);
     localStorage.setItem('orders', JSON.stringify(updatedOrders));
 
+    // Broadcast order update to other devices
+    const updatedOrder = updatedOrders.find(o => o.id === orderId);
+    if (updatedOrder) {
+      dataSync.broadcastOrderUpdate(updatedOrder);
+    }
+
     // Send status update notification
     if (order && oldStatus !== newStatus) {
       sendStatusUpdateNotification(order, oldStatus, newStatus).then(result => {
@@ -220,6 +256,9 @@ function AdminOrders() {
       const updatedOrders = orders.filter(order => order.id !== orderId);
       setOrders(updatedOrders);
       localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      
+      // Broadcast order deletion to other devices
+      dataSync.broadcastOrderDelete(orderId);
     }
   };
 

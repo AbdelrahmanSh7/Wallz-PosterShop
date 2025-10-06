@@ -1,5 +1,6 @@
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG } from '../config/emailConfig';
+import { getGovernorateName } from '../data/governorates';
 
 // Initialize EmailJS
 emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
@@ -10,15 +11,19 @@ emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
  */
 export const sendNewOrderNotification = async (orderData) => {
   try {
+    // Get governorate name
+    const governorateName = orderData.customer?.governorate || orderData.customerData?.governorate || 'غير محدد';
+    const governorateDisplayName = getGovernorateName(governorateName);
+    
     // Prepare email template parameters
     const templateParams = {
       to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
       order_id: orderData.id,
       customer_name: orderData.customer?.fullName || orderData.customerData?.fullName || 'N/A',
       customer_phone: orderData.customer?.phone1 || orderData.customerData?.phone1 || 'N/A',
-      customer_governorate: orderData.customer?.governorate || orderData.customerData?.governorate || 'N/A',
+      customer_governorate: governorateDisplayName,
       customer_address: orderData.customer?.address || orderData.customerData?.address || 'N/A',
-      order_date: new Date(orderData.date).toLocaleDateString('en-GB'),
+      order_date: new Date(orderData.date || orderData.orderDate).toLocaleDateString('en-GB'),
       order_status: orderData.status || 'pending',
       order_total: orderData.total || orderData.finalTotal || 0,
       order_subtotal: orderData.subtotal || 0,
