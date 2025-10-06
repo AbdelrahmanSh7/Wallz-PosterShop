@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCheckCircle, FaTruck, FaClock, FaMapMarkerAlt, FaPhone, FaShoppingBag, FaUser } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
+import Loading from '../Loading/Loading';
 import './OrderConfirmation.css';
 
 function OrderConfirmation() {
@@ -11,23 +12,37 @@ function OrderConfirmation() {
   useEffect(() => {
     // Get order data from navigation state (passed from Cart)
     if (location.state && location.state.order) {
-      setOrderData(location.state.order);
-      setLoading(false);
+      // Small delay to show loading animation
+      setTimeout(() => {
+        setOrderData(location.state.order);
+        setLoading(false);
+        console.log('✅ Order confirmation loaded successfully');
+      }, 500);
     } else {
       // Fallback: Get the latest order from localStorage
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
       if (orders.length > 0) {
         const latestOrder = orders[orders.length - 1];
-        setOrderData(latestOrder);
+        setTimeout(() => {
+          setOrderData(latestOrder);
+          setLoading(false);
+        }, 500);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     }
   }, [location.state]);
 
   if (loading) {
     return (
       <div className="order-confirmation-container">
-        <div className="loading">جاري التحميل...</div>
+        <div className="order-loading">
+          <Loading 
+            size="large" 
+            color="primary" 
+            text="Loading order details..." 
+          />
+        </div>
       </div>
     );
   }
@@ -46,115 +61,103 @@ function OrderConfirmation() {
 
   return (
     <div className="order-confirmation-container">
+      {/* Progress Indicator */}
+      <div className="checkout-progress">
+        <div className="progress-step">
+          <div className="step-number">1</div>
+          <span>Personal Information</span>
+        </div>
+        <div className="progress-line"></div>
+        <div className="progress-step active">
+          <div className="step-number">2</div>
+          <span>Summary</span>
+        </div>
+      </div>
+
       <div className="confirmation-content">
-        {/* Success Header */}
-        <div className="success-header">
-          <div className="success-icon">
+        {/* Success Header - Compact */}
+        <div className="success-header-compact">
+          <div className="success-icon-compact">
             <FaCheckCircle />
           </div>
-          <h1>Order Successfully Submitted!</h1>
-          <p>Thank you for your trust in us. We will contact you soon to confirm the details.</p>
+          <h1>Order Submitted Successfully!</h1>
+          <p className="thank-you-message">
+            شكراً على ثقتك فينا! انتظر رسالة تأكيد منا على الإيميل او الواتساب ❤️
+            <br />
+            Thank you for your trust! Wait for our confirmation message via email or WhatsApp ❤️
+          </p>
         </div>
 
-        {/* Order Summary */}
-        <div className="order-summary">
+        {/* Order Summary - Compact */}
+        <div className="order-summary-compact">
           <h2>Order Summary</h2>
           
-          <div className="order-items">
+          <div className="order-items-compact">
             {orderData.items.map((item, index) => (
-              <div key={index} className="order-item">
-                <div className="item-info">
-                  <h3>{item.name}</h3>
-                  <p className="item-category">{item.category}</p>
-                  <p className="item-details">
-                    Size: {item.size} | Color: {item.color} | Quantity: {item.quantity}
-                  </p>
+              <div key={index} className="order-item-compact" onClick={() => window.location.href = `/product/${item.productId}`}>
+                <div className="item-image-light">
+                  <img src={item.image} alt={item.name} />
                 </div>
-                <div className="item-price">
-                  {item.price} EGP × {item.quantity} = {item.price * item.quantity} EGP
+                <div className="item-info-compact">
+                  <h3>{item.name}</h3>
+                  <p className="item-details-compact">
+                    {item.size} | {item.color} | Qty: {item.quantity}
+                  </p>
+                  <div className="item-price-compact">{item.price * item.quantity} EGP</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="order-totals">
-            <div className="total-row">
+          <div className="order-totals-compact">
+            <div className="total-row-compact">
               <span>Subtotal:</span>
               <span>{orderData.subtotal} EGP</span>
             </div>
-            <div className="total-row">
+            <div className="total-row-compact">
               <span>Shipping:</span>
               <span>+{orderData.shipping} EGP</span>
             </div>
-            <div className="final-total">
+            <div className="final-total-compact">
               <span>Total:</span>
               <span>{orderData.total} EGP</span>
             </div>
           </div>
         </div>
 
-        {/* Customer Information */}
-        <div className="customer-info">
-          <h2>Customer Information</h2>
-          <div className="info-grid">
-            <div className="info-item">
-              <FaUser className="info-icon" />
-              <div>
-                <label>Full Name</label>
-                <p>{orderData.customer.fullName}</p>
-              </div>
-            </div>
-            <div className="info-item">
-              <FaMapMarkerAlt className="info-icon" />
-              <div>
-                <label>Governorate</label>
-                <p>{orderData.customer.governorate}</p>
-              </div>
-            </div>
-            <div className="info-item">
-              <FaMapMarkerAlt className="info-icon" />
-              <div>
-                <label>Detailed Address</label>
-                <p>{orderData.customer.address}</p>
-              </div>
-            </div>
-            <div className="info-item">
-              <FaPhone className="info-icon" />
-              <div>
-                <label>Phone Number</label>
-                <p>{orderData.customer.phone1}</p>
-              </div>
-            </div>
-            {orderData.customer.phone2 && (
-              <div className="info-item">
-                <FaPhone className="info-icon" />
-                <div>
-                  <label>Alternative Phone</label>
-                  <p>{orderData.customer.phone2}</p>
-                </div>
-              </div>
-            )}
+        {/* Customer & Delivery Info - Compact */}
+        <div className="info-compact">
+          <div className="info-row">
+            <FaUser className="info-icon" />
+            <span><strong>Name:</strong> {orderData.customer.fullName}</span>
           </div>
-        </div>
-
-        {/* Delivery Information */}
-        <div className="delivery-info">
-          <h2>Delivery Information</h2>
-          <div className="delivery-details">
-            <div className="delivery-item">
-              <FaTruck className="delivery-icon" />
-              <div>
-                <h3>Expected Delivery Time</h3>
-                <p>2-6 working days</p>
-              </div>
+          {orderData.customer.email && (
+            <div className="info-row">
+              <FaUser className="info-icon" />
+              <span><strong>Email:</strong> {orderData.customer.email}</span>
             </div>
-            <div className="delivery-item">
-              <FaClock className="delivery-icon" />
-              <div>
-                <h3>Order Status</h3>
-                <p className="status-submitted">Submitted</p>
-              </div>
+          )}
+          <div className="info-row">
+            <FaMapMarkerAlt className="info-icon" />
+            <span><strong>Location:</strong> {orderData.customer.governorate}</span>
+          </div>
+          <div className="info-row">
+            <FaPhone className="info-icon" />
+            <span><strong>Phone:</strong> {orderData.customer.phone1}</span>
+          </div>
+          {orderData.customer.phone2 && (
+            <div className="info-row">
+              <FaPhone className="info-icon" />
+              <span><strong>Phone 2:</strong> {orderData.customer.phone2}</span>
             </div>
+          )}
+          <div className="info-row">
+            <FaTruck className="info-icon" />
+            <span><strong>Delivery:</strong> 2-6 working days</span>
+          </div>
+          <div className="info-row">
+            <FaClock className="info-icon" />
+            <span><strong>Status:</strong> <span className="status-submitted">Submitted</span></span>
           </div>
         </div>
 

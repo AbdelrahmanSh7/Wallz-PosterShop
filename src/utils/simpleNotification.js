@@ -78,7 +78,7 @@ class SimpleNotification {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: linear-gradient(135deg, #e1306c, #ff6b6b);
+      background: linear-gradient(135deg, #2c2c2c, #404040);
       color: white;
       padding: 20px;
       border-radius: 15px;

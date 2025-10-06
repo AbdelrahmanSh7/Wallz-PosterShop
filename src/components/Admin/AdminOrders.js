@@ -18,11 +18,18 @@ import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import firebaseService from '../../services/firebaseService';
 import simpleNotification from '../../utils/simpleNotification';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
+import CustomAlert from '../CustomAlert/CustomAlert';
 import { testFirebaseConnection } from '../../utils/firebaseTest';
+import { useLoadingContext } from '../Loading/LoadingProvider';
+import Loading from '../Loading/Loading';
+import Notification from '../Notification/Notification';
 import './AdminOrders.css';
 
 function AdminOrders() {
   const navigate = useNavigate();
+  const { alertState, showAlert, hideAlert } = useCustomAlert();
+  const { startComponentLoading, stopComponentLoading, isComponentLoading } = useLoadingContext();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +37,9 @@ function AdminOrders() {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [deletedOrderIds, setDeletedOrderIds] = useState(new Set());
+  const [newOrders, setNewOrders] = useState(new Set());
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -41,43 +50,93 @@ function AdminOrders() {
     }
   }, [navigate]);
 
-  // Load deleted orders on component mount
+  // Hide notification when admin panel is opened
   useEffect(() => {
-    const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-    setDeletedOrderIds(new Set(deletedOrders));
+    if (window.location.pathname.includes('/admin/orders')) {
+      setShowNotification(false);
+    }
   }, []);
+
 
   // Load orders from Firebase
   useEffect(() => {
     const loadOrders = async () => {
-      // Test Firebase connection first
-      const connectionTest = await testFirebaseConnection();
-      if (!connectionTest.success) {
-        console.error('❌ Firebase connection failed:', connectionTest.error);
-        alert('Firebase connection failed. Please check your configuration.');
-        return;
-      }
-
-      const result = await firebaseService.getOrders();
-      if (result.success) {
-        // Get deleted orders from localStorage
-        const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-        const deletedSet = new Set(deletedOrders);
+      try {
+        startComponentLoading('loadOrders', 'Loading orders...');
         
-        // Filter out deleted orders
-        const filteredOrders = result.orders.filter(order => !deletedSet.has(order.id));
-        setOrders(filteredOrders);
-        setFilteredOrders(filteredOrders);
-        console.log('✅ Orders loaded from Firebase:', filteredOrders.length, '(filtered from', result.orders.length, 'total)');
-      } else {
-        console.error('❌ Failed to load orders from Firebase:', result.error);
+        // Test Firebase connection first
+        const connectionTest = await testFirebaseConnection();
+        if (!connectionTest.success) {
+          console.error('❌ Firebase connection failed:', connectionTest.error);
+          alert('Firebase connection failed. Please check your configuration.');
+          return;
+        }
+
+        const result = await firebaseService.getOrders();
+        if (result.success) {
+          setOrders(result.orders);
+          setFilteredOrders(result.orders);
+          console.log('✅ Orders loaded from Firebase:', result.orders.length);
+          
+          // Mark new orders (created in last 24 hours)
+          const now = new Date();
+          const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const newOrderIds = result.orders
+            .filter(order => new Date(order.date) > oneDayAgo)
+            .map(order => order.id);
+          setNewOrders(new Set(newOrderIds));
+          
+          // Show notification if there are new orders and admin panel is not currently open
+          const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+          if (newOrderIds.length > 0 && !isAdminPanelOpen) {
+            setNotificationCount(newOrderIds.length);
+            setShowNotification(true);
+          }
+        } else {
+          console.error('❌ Failed to load orders from Firebase:', result.error);
+          // Fallback to localStorage
+          const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          setOrders(savedOrders);
+          setFilteredOrders(savedOrders);
+          
+          // Check for new orders in localStorage
+          const now = new Date();
+          const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const newOrderIds = savedOrders
+            .filter(order => new Date(order.date) > oneDayAgo)
+            .map(order => order.id);
+          setNewOrders(new Set(newOrderIds));
+          
+          // Show notification if there are new orders
+          const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+          if (newOrderIds.length > 0 && !isAdminPanelOpen) {
+            setNotificationCount(newOrderIds.length);
+            setShowNotification(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading orders:', error);
         // Fallback to localStorage
         const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-        const deletedSet = new Set(deletedOrders);
-        const filteredOrders = savedOrders.filter(order => !deletedSet.has(order.id));
-        setOrders(filteredOrders);
-        setFilteredOrders(filteredOrders);
+        setOrders(savedOrders);
+        setFilteredOrders(savedOrders);
+        
+        // Check for new orders in localStorage
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const newOrderIds = savedOrders
+          .filter(order => new Date(order.date) > oneDayAgo)
+          .map(order => order.id);
+        setNewOrders(new Set(newOrderIds));
+        
+        // Show notification if there are new orders
+        const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+        if (newOrderIds.length > 0 && !isAdminPanelOpen) {
+          setNotificationCount(newOrderIds.length);
+          setShowNotification(true);
+        }
+      } finally {
+        stopComponentLoading('loadOrders');
       }
     };
 
@@ -89,20 +148,36 @@ function AdminOrders() {
     const handleFirebaseUpdate = (event) => {
       console.log('🔥 Firebase orders updated:', event.detail.orders.length);
       
-      // Get deleted orders from localStorage
-      const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-      const deletedSet = new Set(deletedOrders);
+      setOrders(event.detail.orders);
+      setFilteredOrders(event.detail.orders);
       
-      // Filter out deleted orders
-      const filteredOrders = event.detail.orders.filter(order => !deletedSet.has(order.id));
-      setOrders(filteredOrders);
-      setFilteredOrders(filteredOrders);
+      // Mark new orders (created in last 24 hours)
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const newOrderIds = event.detail.orders
+        .filter(order => new Date(order.date) > oneDayAgo)
+        .map(order => order.id);
+      setNewOrders(new Set(newOrderIds));
       
       // Show notification for new orders
-      if (filteredOrders.length > orders.length) {
+      if (event.detail.orders.length > orders.length) {
         console.log('🛍️ New order detected via Firebase!');
+        const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+        if (newOrderIds.length > 0 && !isAdminPanelOpen) {
+          setNotificationCount(newOrderIds.length);
+          setShowNotification(true);
+        }
       }
     };
+
+    // Hide NEW badges after 5 seconds
+    const hideNewBadges = () => {
+      setTimeout(() => {
+        setNewOrders(new Set());
+      }, 5000);
+    };
+
+    hideNewBadges();
 
     // Add event listener
     window.addEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
@@ -111,102 +186,8 @@ function AdminOrders() {
     return () => {
       window.removeEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
     };
-  }, [deletedOrderIds, orders.length]);
+  }, [orders.length]);
 
-  // Auto-export to Excel every 5 minutes
-  useEffect(() => {
-    const autoExportInterval = setInterval(() => {
-      if (orders.length > 0) {
-        // Silent auto-export without user notification
-        const autoExport = async () => {
-          try {
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Orders');
-
-            // Add headers
-            worksheet.columns = [
-              { header: 'Order ID', key: 'id', width: 15 },
-              { header: 'Date', key: 'date', width: 20 },
-              { header: 'Customer Name', key: 'customerName', width: 25 },
-              { header: 'Phone 1', key: 'phone1', width: 15 },
-              { header: 'Phone 2', key: 'phone2', width: 15 },
-              { header: 'Governorate', key: 'governorate', width: 20 },
-              { header: 'Address', key: 'address', width: 30 },
-              { header: 'Status', key: 'status', width: 15 },
-              { header: 'Items Count', key: 'itemsCount', width: 12 },
-              { header: 'Subtotal', key: 'subtotal', width: 15 },
-              { header: 'Shipping', key: 'shipping', width: 15 },
-              { header: 'Total', key: 'total', width: 15 },
-              { header: 'Items Details', key: 'itemsDetails', width: 50 }
-            ];
-
-            // Style headers
-            worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
-            worksheet.getRow(1).fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFE1306C' }
-            };
-
-            // Add data rows
-            orders.forEach(order => {
-              const customer = order.customer || order.customerData || {};
-              const itemsDetails = order.items?.map(item => 
-                `${item.name} (${item.size}, ${item.color}) x${item.quantity} = ${item.price * item.quantity} EGP`
-              ).join('; ') || 'No items';
-
-              worksheet.addRow({
-                id: order.id,
-                date: new Date(order.date).toLocaleDateString('en-GB'),
-                customerName: customer.fullName || 'N/A',
-                phone1: customer.phone1 || 'N/A',
-                phone2: customer.phone2 || 'N/A',
-                governorate: customer.governorate || 'N/A',
-                address: customer.address || 'N/A',
-                status: order.status,
-                itemsCount: order.items?.length || 0,
-                subtotal: order.subtotal || (order.total - (order.shipping || order.shippingCost || 0)) || 0,
-                shipping: order.shipping || order.shippingCost || 0,
-                total: order.total || order.finalTotal || 0,
-                itemsDetails: itemsDetails
-              });
-            });
-
-            // Auto-fit columns
-            worksheet.columns.forEach(column => {
-              column.width = Math.max(column.width, 10);
-            });
-
-            // Add summary row
-            const summaryRow = worksheet.addRow({});
-            summaryRow.getCell(1).value = 'SUMMARY';
-            summaryRow.getCell(1).font = { bold: true };
-            
-            summaryRow.getCell(9).value = `Total Orders: ${getTotalOrders()}`;
-            summaryRow.getCell(10).value = `Total Revenue: ${getTotalRevenue()} EGP`;
-            summaryRow.getCell(9).font = { bold: true };
-            summaryRow.getCell(10).font = { bold: true };
-
-            // Generate and download file
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `orders_auto_${new Date().toISOString().split('T')[0]}_${new Date().toISOString().split('T')[1].split('.')[0].replace(/:/g, '-')}.xlsx`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-          } catch (error) {
-            console.error('Auto-export error:', error);
-          }
-        };
-        
-        autoExport();
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-
-    return () => clearInterval(autoExportInterval);
-  }, [orders]);
 
   // Sort orders function
   const sortOrders = (ordersToSort, sortType) => {
@@ -294,7 +275,17 @@ function AdminOrders() {
   };
 
   const deleteOrder = async (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
+    const confirmed = await showAlert(
+      'Are you sure you want to delete this order?',
+      'delete',
+      { 
+        showCancel: true, 
+        confirmText: 'Delete', 
+        cancelText: 'Cancel' 
+      }
+    );
+    
+    if (confirmed) {
       try {
         console.log('🗑️ Attempting to delete order:', orderId);
         
@@ -305,9 +296,6 @@ function AdminOrders() {
         if (firebaseResult.success) {
           console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
           
-          // Add to deleted orders list
-          setDeletedOrderIds(prev => new Set([...prev, orderId]));
-          
           // Update local state immediately
           const updatedOrders = orders.filter(order => order.id !== orderId);
           setOrders(updatedOrders);
@@ -316,32 +304,19 @@ function AdminOrders() {
           // Also update localStorage as backup
           localStorage.setItem('orders', JSON.stringify(updatedOrders));
           
-          // Save deleted orders to localStorage
-          const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-          deletedOrders.push(orderId);
-          localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
-          
-          alert('تم حذف الطلب بنجاح');
+          await showAlert('تم حذف الطلب نهائياً من النظام', 'success');
         } else {
           console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
-          alert('حدث خطأ في حذف الطلب من Firebase. يرجى المحاولة مرة أخرى.');
+          await showAlert('حدث خطأ في حذف الطلب من Firebase. يرجى المحاولة مرة أخرى.', 'error');
         }
       } catch (error) {
         console.error('❌ Error deleting order:', error);
-        alert('حدث خطأ في حذف الطلب. يرجى المحاولة مرة أخرى.');
+        await showAlert('حدث خطأ في حذف الطلب. يرجى المحاولة مرة أخرى.', 'error');
       }
     }
   };
 
 
-  // Clear deleted orders from localStorage (permanent cleanup)
-  const clearDeletedOrders = () => {
-    if (window.confirm('Are you sure you want to permanently clear all deleted orders from memory? This action cannot be undone.')) {
-      localStorage.removeItem('deletedOrders');
-      setDeletedOrderIds(new Set());
-      alert('✅ Deleted orders cleared from memory successfully!');
-    }
-  };
 
   // Manual refresh function
   const handleManualRefresh = async () => {
@@ -351,17 +326,11 @@ function AdminOrders() {
     const result = await firebaseService.getOrders();
     
     if (result.success) {
-      // Get deleted orders from localStorage
-      const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-      const deletedSet = new Set(deletedOrders);
-      
-      // Filter out deleted orders
-      const filteredOrders = result.orders.filter(order => !deletedSet.has(order.id));
-      setOrders(filteredOrders);
-      setFilteredOrders(filteredOrders);
+      setOrders(result.orders);
+      setFilteredOrders(result.orders);
       
       // Show success message
-      alert(`✅ Orders refreshed successfully!\nFound ${filteredOrders.length} orders from Firebase (filtered from ${result.orders.length} total).`);
+      await showAlert(`Orders refreshed successfully!\nFound ${result.orders.length} orders from Firebase.`, 'success');
       console.log(`✅ Found ${result.orders.length} orders from Firebase`);
     } else {
       console.error('❌ Failed to refresh orders from Firebase:', result.error);
@@ -419,6 +388,17 @@ function AdminOrders() {
       const subtotal = order.subtotal || (order.total - (order.shipping || order.shippingCost || 0)) || 0;
       return sum + subtotal;
     }, 0);
+  };
+
+  // Check if order is new (within last 24 hours)
+  const isNewOrder = (order) => {
+    return newOrders.has(order.id);
+  };
+
+  // Hide notification function
+  const hideNotification = () => {
+    setShowNotification(false);
+    setNotificationCount(0);
   };
 
   // Export orders to Excel
@@ -502,16 +482,35 @@ function AdminOrders() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      alert('Error exporting to Excel. Please try again.');
     }
   };
 
   return (
     <div className="admin-orders-container">
+      {/* Loading Overlay */}
+      {isComponentLoading('loadOrders') && (
+        <div className="loading-overlay">
+          <Loading 
+            size="large" 
+            color="primary" 
+            text="Loading orders..." 
+            overlay={true}
+          />
+        </div>
+      )}
+      
       {/* Header */}
       <div className="admin-header">
         <div className="admin-header-content">
-          <h1>📊 Orders Management</h1>
+          <div className="header-top">
+            <button 
+              onClick={() => navigate('/')} 
+              className="back-to-home-btn"
+            >
+              ← Back to Home
+            </button>
+            <h1>📊 Orders Management</h1>
+          </div>
           <div className="admin-stats">
             <div className="stat-card">
               <FaShoppingCart />
@@ -526,11 +525,6 @@ function AdminOrders() {
                 <span className="stat-number">${getTotalRevenue()}</span>
                 <span className="stat-label">Total Revenue</span>
               </div>
-            </div>
-            <div className="stat-card">
-              <button onClick={clearDeletedOrders} className="clear-deleted-btn" title="Clear deleted orders from memory">
-                🗑️ Clear Deleted
-              </button>
             </div>
           </div>
         </div>
@@ -598,7 +592,12 @@ function AdminOrders() {
             <div key={order.id} className="order-card">
               <div className="order-header">
                 <div className="order-info">
-                  <h3>Order #{order.id.slice(-6)}</h3>
+                  <div className="order-title-row">
+                    <h3>Order #{order.id.slice(-6)}</h3>
+                    {isNewOrder(order) && (
+                      <span className="new-badge">New</span>
+                    )}
+                  </div>
                   <span className="order-date">
                     <FaCalendarAlt />
                     {formatDate(order.orderDate)}
@@ -632,48 +631,9 @@ function AdminOrders() {
               <div className="order-summary">
                 <div className="order-items">
                   <span>{order.items.length} items</span>
-                  <div className="items-preview">
-                    {order.items.slice(0, 3).map((item, index) => (
-                      <div key={index} className="item-preview">
-                        <div className="item-image">
-                          <Link 
-                            to={`/product/${item.productId}`} 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <img 
-                              src={item.image || `/images/${item.productId}.jpg`} 
-                              alt={item.name}
-                              className="poster-thumbnail"
-                              onError={(e) => {
-                                e.target.src = '/images/placeholder.jpg';
-                              }}
-                            />
-                          </Link>
-                        </div>
-                        <div className="item-details">
-                          <Link 
-                            to={`/product/${item.productId}`} 
-                            className="item-name-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {item.name}
-                          </Link>
-                          <span className="item-category">{item.category}</span>
-                          <span className="item-specs">Size: {item.size} | Color: {item.color}</span>
-                        </div>
-                        <div className="item-quantity">x{item.quantity}</div>
-                        <div className="item-price">${item.price * item.quantity}</div>
-                      </div>
-                    ))}
-                    {order.items.length > 3 && (
-                      <div className="more-items">+{order.items.length - 3} more items</div>
-                    )}
-                  </div>
                 </div>
                 <div className="order-total">
-                  <span>${order.total || order.finalTotal || 0}</span>
+                  <span>${order.subtotal || (order.total - (order.shipping || order.shippingCost || 0)) || 0}</span>
                 </div>
               </div>
 
@@ -761,9 +721,23 @@ function AdminOrders() {
                 <h3>🛍️ Ordered Items</h3>
                 {selectedOrder.items.map((item, index) => (
                   <div key={index} className="item-detail">
-                    <img src={item.image} alt={item.name} />
+                    <Link 
+                      to={`/product/${item.productId}`} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="item-image-link"
+                    >
+                      <img src={item.image} alt={item.name} />
+                    </Link>
                     <div className="item-info">
-                      <h4>{item.name}</h4>
+                      <Link 
+                        to={`/product/${item.productId}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="item-name-link"
+                      >
+                        <h4>{item.name}</h4>
+                      </Link>
                       <p>{item.category} - {item.size}</p>
                       <p>Color: {item.color}</p>
                       <p>Quantity: {item.quantity}</p>
@@ -808,6 +782,23 @@ function AdminOrders() {
           </div>
         </div>
       )}
+
+      {/* Custom Alert */}
+      <CustomAlert
+        show={alertState.show}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        onCancel={alertState.onCancel}
+        confirmText={alertState.confirmText}
+        cancelText={alertState.cancelText}
+      />
+      
+      <Notification
+        show={showNotification}
+        count={notificationCount}
+        onClose={hideNotification}
+      />
     </div>
   );
 }

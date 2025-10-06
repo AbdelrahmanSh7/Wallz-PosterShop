@@ -55,14 +55,14 @@
 }
 .product-calm-price {
   font-size: 1.5em;
-  color: #e1306c;
+  color: #2c2c2c;
   font-weight: 700;
   margin-bottom: 18px;
 }
 
 /* Discount Badge */
 .discount-badge {
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   color: white;
   padding: 8px 16px;
   border-radius: 20px;
@@ -110,9 +110,9 @@
 
 .discounted-price {
   font-size: 1.8em;
-  color: #e1306c;
+  color: #2c2c2c;
   font-weight: 800;
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -143,9 +143,9 @@
 }
 .calm-size-btn.selected,
 .calm-size-btn:hover {
-  background: #e1306c;
+  background: #2c2c2c;
   color: #fff;
-  border-color: #e1306c;
+  border-color: #2c2c2c;
 }
 .product-calm-order-btns {
   display: flex;
@@ -209,14 +209,14 @@
 }
 
 .confirm-order-btn {
-  background: #e1306c;
+  background: #2c2c2c;
   color: white;
-  border: 1px solid #e1306c;
+  border: 1px solid #2c2c2c;
 }
 
 .confirm-order-btn:hover {
-  background: #ff6b6b;
-  border-color: #ff6b6b;
+  background: #404040;
+  border-color: #404040;
   transform: translateY(-2px);
   box-shadow: 0 4px 18px rgba(225, 48, 108, 0.3);
 }

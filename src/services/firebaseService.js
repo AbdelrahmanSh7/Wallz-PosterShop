@@ -30,10 +30,14 @@ class FirebaseService {
     onSnapshot(ordersQuery, (snapshot) => {
       const orders = [];
       snapshot.forEach((doc) => {
-        orders.push({
-          id: doc.id,
-          ...doc.data()
-        });
+        const orderData = doc.data();
+        // Only include orders that are not marked as deleted
+        if (!orderData.deleted) {
+          orders.push({
+            id: doc.id,
+            ...orderData
+          });
+        }
       });
 
       // Trigger custom event for components to update
@@ -81,10 +85,14 @@ class FirebaseService {
       const orders = [];
       
       querySnapshot.forEach((doc) => {
-        orders.push({
-          id: doc.id,
-          ...doc.data()
-        });
+        const orderData = doc.data();
+        // Only include orders that are not marked as deleted
+        if (!orderData.deleted) {
+          orders.push({
+            id: doc.id,
+            ...orderData
+          });
+        }
       });
 
       // Sort by creation date (newest first)
@@ -133,19 +141,23 @@ class FirebaseService {
     }
   }
 
-  // Delete order
+  // Delete order (mark as deleted instead of actual deletion)
   async deleteOrder(orderId) {
     try {
-      await deleteDoc(doc(db, this.ordersCollection, orderId));
+      const orderRef = doc(db, this.ordersCollection, orderId);
+      await updateDoc(orderRef, {
+        deleted: true,
+        deletedAt: serverTimestamp()
+      });
       
-      console.log('✅ Order deleted from Firebase:', orderId);
+      console.log('✅ Order marked as deleted in Firebase:', orderId);
       
       return {
         success: true,
         id: orderId
       };
     } catch (error) {
-      console.error('❌ Error deleting order from Firebase:', error);
+      console.error('❌ Error marking order as deleted in Firebase:', error);
       return {
         success: false,
         error: error.message

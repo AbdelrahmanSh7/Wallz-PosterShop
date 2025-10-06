@@ -120,7 +120,7 @@ const Shop = () => {
                     <span className="discounted-price-overlay" style={{ 
                       fontSize: '1.18em', 
                       fontWeight: 700,
-                      background: 'linear-gradient(135deg, #e1306c, #ff6b6b)',
+                      background: 'linear-gradient(135deg, #2c2c2c, #404040)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text'

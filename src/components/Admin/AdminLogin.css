@@ -130,7 +130,7 @@
 .form-group input:focus {
   outline: none;
   background: #f8f9fa;
-  box-shadow: 0 0 0 2px #e1306c;
+  box-shadow: 0 0 0 2px #2c2c2c;
 }
 
 .password-toggle {
@@ -147,7 +147,7 @@
 }
 
 .password-toggle:hover {
-  color: #e1306c;
+  color: #2c2c2c;
 }
 
 .error-message {
@@ -199,7 +199,7 @@
 .remember-me input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #e1306c;
+  accent-color: #2c2c2c;
   -webkit-appearance: none;
   appearance: none;
   border: 2px solid #ddd;
@@ -210,8 +210,8 @@
 }
 
 .remember-me input[type="checkbox"]:checked {
-  background: #e1306c;
-  border-color: #e1306c;
+  background: #2c2c2c;
+  border-color: #2c2c2c;
 }
 
 .remember-me input[type="checkbox"]:checked::after {

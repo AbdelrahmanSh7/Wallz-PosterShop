@@ -6,10 +6,12 @@ import Category from "./components/Category/Category";
 import Home from './components/Home/Home';
 import Product from './components/Product/Product';
 import Shop from './components/Shop';
-import Cart from './components/Cart';
+import Cart from './components/Cart/Cart';
 import Footer from './components/Footer/Footer';
 import AdminOrders from './components/Admin/AdminOrders';
 import OrderConfirmation from './components/OrderConfirmation/OrderConfirmation';
+import { LoadingProvider } from './components/Loading/LoadingProvider';
+import PageTransition from './components/PageTransition/PageTransition';
 
 function AppContent() {
   const location = useLocation();
@@ -20,7 +22,7 @@ function AppContent() {
   const isAdminPage = location.pathname.startsWith('/admin');
   
   return (
-    <>
+    <PageTransition>
       {!isAdminPage && <Navbar />}
       {!isProductPage && !isShopPage && !isCartPage && !isOrderConfirmationPage && !isAdminPage && <CategorySlider />}
       <Routes>
@@ -33,15 +35,17 @@ function AppContent() {
         <Route path="/admin/orders" element={<AdminOrders />} />
       </Routes>
       {!isAdminPage && <Footer />}
-    </>
+    </PageTransition>
   );
 }
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <LoadingProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </LoadingProvider>
   );
 }
 

@@ -1,21 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaTrash, FaShoppingCart, FaCheckCircle } from 'react-icons/fa';
+import { FaShoppingCart } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { GOVERNORATES, getShippingCost } from '../../data/governorates';
 import firebaseService from '../../services/firebaseService';
 import simpleNotification from '../../utils/simpleNotification';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
+import CustomAlert from '../CustomAlert/CustomAlert';
+import { useLoadingContext } from '../Loading/LoadingProvider';
+import Loading from '../Loading/Loading';
 import './Cart.css';
 
 function Cart() {
   const navigate = useNavigate();
+  const { alertState, showAlert: showCustomAlert } = useCustomAlert();
+  const { startComponentLoading, stopComponentLoading, isComponentLoading } = useLoadingContext();
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [shippingCost, setShippingCost] = useState(80);
+  const [shippingCost, setShippingCost] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
   
   // Customer data form state
   const [customerData, setCustomerData] = useState({
     fullName: '',
+    lastName: '',
+    email: '',
     governorate: '',
     address: '',
     phone1: '',
@@ -23,6 +31,53 @@ function Cart() {
   });
   const [showCustomerForm, setShowCustomerForm] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!customerData.fullName.trim()) {
+      errors.fullName = 'الاسم مطلوب';
+    }
+    
+    if (customerData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
+      errors.email = 'البريد الإلكتروني غير صحيح';
+    }
+    
+    if (!customerData.governorate) {
+      errors.governorate = 'المحافظة مطلوبة';
+    }
+    
+    if (!customerData.address.trim()) {
+      errors.address = 'العنوان مطلوب';
+    }
+    
+    if (!customerData.phone1.trim()) {
+      errors.phone1 = 'رقم التلفون الأول مطلوب';
+    } else if (!/^[0-9]+$/.test(customerData.phone1.replace(/\s/g, ''))) {
+      errors.phone1 = 'رقم التلفون يجب أن يحتوي على أرقام فقط';
+    }
+    
+    if (!customerData.phone2.trim()) {
+      errors.phone2 = 'رقم التلفون الثاني مطلوب';
+    } else if (!/^[0-9]+$/.test(customerData.phone2.replace(/\s/g, ''))) {
+      errors.phone2 = 'رقم التلفون يجب أن يحتوي على أرقام فقط';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Calculate shipping cost when governorate changes
+  useEffect(() => {
+    if (customerData.governorate) {
+      const cost = getShippingCost(customerData.governorate);
+      setShippingCost(cost);
+    } else {
+      setShippingCost(0);
+    }
+  }, [customerData.governorate]);
 
   // Calculate totals whenever cart changes
   const calculateTotals = useCallback((items) => {
@@ -91,32 +146,6 @@ function Cart() {
   };
 
 
-  // Update quantity
-  const updateQuantity = (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-    
-    const updatedCart = cartItems.map(item => 
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
-    );
-    
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    calculateTotals(updatedCart);
-    
-    // Trigger cart update event
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
-  };
-
-  // Remove item from cart
-  const removeItem = (itemId) => {
-    const updatedCart = cartItems.filter(item => item.id !== itemId);
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    calculateTotals(updatedCart);
-    
-    // Trigger cart update event
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
-  };
 
   // Clear entire cart
   const clearCart = () => {
@@ -132,10 +161,20 @@ function Cart() {
   // Handle customer data input
   const handleCustomerDataChange = (e) => {
     const { name, value } = e.target;
-    setCustomerData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // For phone numbers, only allow digits
+    if (name === 'phone1' || name === 'phone2') {
+      const numericValue = value.replace(/[^0-9]/g, '');
+      setCustomerData(prev => ({
+        ...prev,
+        [name]: numericValue
+      }));
+    } else {
+      setCustomerData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     
     // Update shipping cost when governorate changes
     if (name === 'governorate') {
@@ -145,8 +184,8 @@ function Cart() {
 
   // Validate customer data
   const validateCustomerData = () => {
-    const { fullName, governorate, address, phone1 } = customerData;
-    return fullName.trim() && governorate.trim() && address.trim() && phone1.trim();
+    const { fullName, governorate, address, phone1, phone2 } = customerData;
+    return fullName.trim() && governorate.trim() && address.trim() && phone1.trim() && phone2.trim();
   };
 
   // Save order to localStorage
@@ -183,7 +222,7 @@ function Cart() {
       simpleNotification.triggerNewOrderEvent(order);
     } else {
       console.error('❌ Failed to save order to Firebase:', firebaseResult.error);
-      alert('حدث خطأ في حفظ الطلب. يرجى المحاولة مرة أخرى.');
+      await showCustomAlert('حدث خطأ في حفظ الطلب. يرجى المحاولة مرة أخرى.', 'error');
       return;
     }
 
@@ -191,6 +230,8 @@ function Cart() {
     clearCart();
     setCustomerData({
       fullName: '',
+      lastName: '',
+      email: '',
       governorate: '',
       address: '',
       phone1: '',
@@ -205,15 +246,29 @@ function Cart() {
 
   // Handle Submit order
   const handleSubmitOrder = async () => {
-    if (!validateCustomerData()) {
+    if (!validateForm()) {
       setShowCustomerForm(true);
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
       return;
     }
     
-    // Save order and redirect to confirmation page with order data
-    await saveOrder();
+    try {
+      startComponentLoading('submitOrder', 'Processing your order...');
+      console.log('🔄 Order submission started - 2 seconds loading...');
+      
+      // Simulate 2 seconds loading time
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('✅ Order processing completed - redirecting to confirmation...');
+      
+      // Save order and redirect to confirmation page with order data
+      await saveOrder();
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      showCustomAlert('Error', 'Failed to submit order. Please try again.', 'error');
+    } finally {
+      stopComponentLoading('submitOrder');
+    }
   };
 
   if (cartItems.length === 0) {
@@ -233,202 +288,184 @@ function Cart() {
 
   return (
     <div className="cart-container">
-      <div className="cart-header">
-        <h1>Shopping Cart</h1>
-        <p>You have {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your cart</p>
+      {/* Progress Indicator */}
+      <div className="checkout-progress">
+        <div className="progress-step active">
+          <div className="step-number">1</div>
+          <span>Personal Information</span>
+        </div>
+        <div className="progress-line"></div>
+        <div className="progress-step">
+          <div className="step-number">2</div>
+          <span>Summary</span>
+        </div>
       </div>
 
-      <div className="cart-content">
-        <div className="cart-items">
-          {cartItems.map((item) => (
-            <div key={item.id} className="cart-item">
-              <div 
-                className="item-image clickable" 
-                onClick={() => window.location.href = `/product/${item.productId}`}
-                title="Click to view poster details"
-              >
-                <img src={item.image} alt={item.name} />
-              </div>
-              
-              <div className="item-details">
-                <h3 
-                  className="clickable-title"
-                  onClick={() => window.location.href = `/product/${item.productId}`}
-                  title="Click to view poster details"
-                >
-                  {item.name}
-                </h3>
-                <p className="item-category">{item.category}</p>
-                <p className="item-size">Size: {item.size}</p>
-                <p className="item-color">
-                  Color: {item.color} 
-                  {item.color === 'Classic Black' ? ' 🖤' : 
-                   item.color === 'Pure White' ? ' 🤍' : ' 🤎'}
-                </p>
-              </div>
-
-              <div className="item-quantity">
-                <button 
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                  className="quantity-btn"
-                >
-                  -
-                </button>
-                <span className="quantity-number">{item.quantity}</span>
-                <button 
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  className="quantity-btn"
-                >
-                  +
-                </button>
-              </div>
-
-              <div className="item-price">
-                <p className="price-per-item">{item.price} EGP</p>
-                <p className="price-total">{item.price * item.quantity} EGP</p>
-              </div>
-
-              <button 
-                onClick={() => removeItem(item.id)}
-                className="remove-btn"
-              >
-                <FaTrash />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="cart-summary">
-          <h3>Order Summary</h3>
-          
-          {/* Items List */}
-          <div className="order-items-list">
-            {cartItems.map((item, index) => (
-              <div key={index} className="order-item-card">
-                <div className="item-bar"></div>
-                <div className="item-content">
-                  <div className="item-info">
-                    <h4 className="item-name">{item.name}</h4>
-                    <p className="item-category">{item.category}</p>
-                    <p className="item-details">Size: {item.size} | Color: {item.color} | Quantity: {item.quantity}</p>
-                  </div>
-                  <div className="item-pricing">
-                    <p className="item-price-breakdown">{item.price} EGP × {item.quantity} =</p>
-                    <p className="item-total-price">{item.price * item.quantity} EGP</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="checkout-content">
+        {/* Left Column - Billing Information */}
+        <div className="billing-section">
+          <h2 className="billing-title">Billing Information</h2>
           
           {/* Customer Data Form */}
           {showCustomerForm && (
-            <div className="customer-form">
-              <h4>ادخل بياناتك</h4>
-              <div className="form-group">
-                <label>الاسم الكامل *</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={customerData.fullName}
-                  onChange={handleCustomerDataChange}
-                  placeholder="أدخل اسمك الكامل"
-                  required
-                />
+            <div className="billing-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={customerData.fullName}
+                    onChange={handleCustomerDataChange}
+                    placeholder="Enter your first name"
+                    required
+                    className={formErrors.fullName ? 'error' : ''}
+                  />
+                  {formErrors.fullName && <span className="error-message">{formErrors.fullName}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={customerData.lastName || ''}
+                    onChange={handleCustomerDataChange}
+                    placeholder="Enter your last name"
+                    className={formErrors.lastName ? 'error' : ''}
+                  />
+                  {formErrors.lastName && <span className="error-message">{formErrors.lastName}</span>}
+                </div>
               </div>
               
               <div className="form-group">
-                <label>المحافظة *</label>
+                <label>Phone Number 1</label>
+                <input
+                  type="tel"
+                  name="phone1"
+                  value={customerData.phone1}
+                  onChange={handleCustomerDataChange}
+                  placeholder="Enter your first phone number"
+                  required
+                  className={formErrors.phone1 ? 'error' : ''}
+                />
+                {formErrors.phone1 && <span className="error-message">{formErrors.phone1}</span>}
+              </div>
+              
+              <div className="form-group">
+                <label>Phone Number 2</label>
+                <input
+                  type="tel"
+                  name="phone2"
+                  value={customerData.phone2}
+                  onChange={handleCustomerDataChange}
+                  placeholder="Enter your second phone number"
+                  required
+                  className={formErrors.phone2 ? 'error' : ''}
+                />
+                {formErrors.phone2 && <span className="error-message">{formErrors.phone2}</span>}
+              </div>
+              
+              <div className="form-group">
+                <label>Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={customerData.address}
+                  onChange={handleCustomerDataChange}
+                  placeholder="Enter your address"
+                  required
+                  className={formErrors.address ? 'error' : ''}
+                />
+                {formErrors.address && <span className="error-message">{formErrors.address}</span>}
+              </div>
+              
+              <div className="form-group">
+                <label>Governorate</label>
                 <select
                   name="governorate"
                   value={customerData.governorate}
                   onChange={handleCustomerDataChange}
                   required
-                  className="governorate-select"
+                  className={`governorate-select ${formErrors.governorate ? 'error' : ''}`}
                 >
-                  <option value="">اختر المحافظة</option>
+                  <option value="">Select Governorate</option>
                   {GOVERNORATES.map((governorate) => (
                     <option key={governorate.value} value={governorate.value}>
                       {governorate.name}
                     </option>
                   ))}
                 </select>
+                {formErrors.governorate && <span className="error-message">{formErrors.governorate}</span>}
               </div>
               
               <div className="form-group">
-                <label>العنوان التفصيلي *</label>
-                <textarea
-                  name="address"
-                  value={customerData.address}
-                  onChange={handleCustomerDataChange}
-                  placeholder="أدخل العنوان التفصيلي"
-                  rows="3"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>رقم التليفون *</label>
+                <label>Email Address (Optional) - (اختياري)</label>
                 <input
-                  type="tel"
-                  name="phone1"
-                  value={customerData.phone1}
+                  type="email"
+                  name="email"
+                  value={customerData.email}
                   onChange={handleCustomerDataChange}
-                  placeholder="رقم التليفون الأساسي"
-                  required
+                  placeholder="Enter your email address (optional)"
+                  className={formErrors.email ? 'error' : ''}
                 />
-              </div>
-              
-              <div className="form-group">
-                <label>رقم التليفون البديل</label>
-                <input
-                  type="tel"
-                  name="phone2"
-                  value={customerData.phone2}
-                  onChange={handleCustomerDataChange}
-                  placeholder="رقم تليفون إضافي"
-                />
+                {formErrors.email && <span className="error-message">{formErrors.email}</span>}
               </div>
             </div>
           )}
 
-          {/* Cost Summary - Now after customer form */}
-          <div className="cost-summary">
-            <div className="summary-row">
-              <span>Subtotal:</span>
-              <span>{totalPrice} EGP</span>
-            </div>
+          <button 
+            onClick={handleSubmitOrder} 
+            className="confirm-btn"
+            disabled={isComponentLoading('submitOrder')}
+          >
+            {isComponentLoading('submitOrder') ? (
+              <>
+                <Loading size="small" color="light" showText={false} />
+                <span style={{ marginLeft: '8px' }}>Processing...</span>
+              </>
+            ) : (
+              'Confirm'
+            )}
+          </button>
+        </div>
+
+        {/* Right Column - Order Summary */}
+        <div className="order-summary-section">
+          <div className="order-summary-card">
+            <h3>Order Summary</h3>
             
-            <div className="summary-row shipping">
-              <span>Shipping: {customerData.governorate ? GOVERNORATES.find(g => g.value === customerData.governorate)?.name : '??'}</span>
-              <span>+{shippingCost} EGP</span>
-            </div>
-            
-            <div className="summary-divider"></div>
-            
-            {(customerData.fullName && customerData.governorate && customerData.address && customerData.phone1) && (
+            <div className="summary-details">
+              <div className="summary-row">
+                <span>Product Price</span>
+                <span>{totalPrice} EGP</span>
+              </div>
+              <div className="summary-row">
+                <span>Shipping Charge</span>
+                <span>{shippingCost} EGP</span>
+              </div>
               <div className="summary-row total">
-                <span>Total:</span>
+                <span>Total</span>
                 <span>{finalTotal} EGP</span>
               </div>
-            )}
+            </div>
           </div>
 
-          <div className="cart-actions">
-            <button onClick={clearCart} className="clear-cart-btn">
-              Clear Cart
-            </button>
-            <button onClick={handleSubmitOrder} className="submit-order-btn">
-              <FaCheckCircle />
-              Submit
-            </button>
-          </div>
-
-          <div className="shipping-info">
-            <h4>🚚 Shipping Information</h4>
-            <p>• Shipping Cost: {shippingCost} EGP</p>
-            <p>• Delivery to the mentioned address</p>
-            <p>• Expected Delivery Time: 2-6 working days</p>
+          {/* Product Cards */}
+          <div className="product-cards">
+            {cartItems.map((item, index) => (
+              <div key={index} className="product-card">
+                <div className="product-image">
+                  <img src={item.image} alt={item.name} />
+                </div>
+                <div className="product-info">
+                  <h4 className="product-name">{item.name}</h4>
+                  <p className="product-brand">{item.category}</p>
+                  <p className="product-details">Size: {item.size} | Qty: {item.quantity}</p>
+                  <div className="product-price">{item.price * item.quantity} EGP</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -441,6 +478,17 @@ function Cart() {
           </div>
         </div>
       )}
+
+      {/* Custom Alert */}
+      <CustomAlert
+        show={alertState.show}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        onCancel={alertState.onCancel}
+        confirmText={alertState.confirmText}
+        cancelText={alertState.cancelText}
+      />
     </div>
   );
 }

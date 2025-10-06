@@ -2,13 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getProductById, getCategoryById } from '../../data/products';
 import { FaInstagram, FaCheckCircle } from 'react-icons/fa';
+import { useLoadingContext } from '../Loading/LoadingProvider';
+import Loading from '../Loading/Loading';
 import './Product.css';
 
 function Product() {
   const { productId } = useParams();
+  const { startComponentLoading, stopComponentLoading, isComponentLoading } = useLoadingContext();
   const product = getProductById(productId);
   const [selectedSize, setSelectedSize] = useState(product?.sizes[0]?.name);
   const [selectedColor, setSelectedColor] = useState('black');
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const topRef = useRef(null);
 
   // Color options for posters
@@ -112,63 +116,81 @@ function Product() {
         
         <div className="product-calm-order-btns">
           <button 
-            onClick={() => {
-              const cartItem = {
-                id: `${product.id}-${selectedSize}-${selectedColor}`,
-                productId: product.id,
-                name: product.name,
-                category: category?.name,
-                size: selectedSize,
-                color: colorOptions.find(c => c.name === selectedColor)?.label,
-                price: discountedPrice,
-                image: product.image,
-                quantity: 1
-              };
-              
-              const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-              const existingItemIndex = existingCart.findIndex(item => item.id === cartItem.id);
-              
-              if (existingItemIndex >= 0) {
-                existingCart[existingItemIndex].quantity += 1;
-              } else {
-                existingCart.push(cartItem);
-              }
-              
-              localStorage.setItem('cart', JSON.stringify(existingCart));
-              
-              // Dispatch custom event to update navbar cart count
-              window.dispatchEvent(new CustomEvent('cartUpdated'));
-              
-              // Show success banner
-              const banner = document.createElement('div');
-              banner.className = 'success-banner';
-              banner.innerHTML = `
-                <div class="banner-content">
-                  <span>✅ Product added to cart successfully!</span>
-                  <button class="view-cart-btn">View Cart</button>
-                </div>
-              `;
-              
-              document.body.appendChild(banner);
-              
-              // Add click event to view cart button
-              setTimeout(() => {
-                const viewCartBtn = banner.querySelector('.view-cart-btn');
-                viewCartBtn.addEventListener('click', () => {
-                  window.location.href = '/cart';
-                });
-              }, 100);
-              
-              // Remove banner after 4 seconds
-              setTimeout(() => {
-                if (banner.parentNode) {
-                  banner.parentNode.removeChild(banner);
+            onClick={async () => {
+              try {
+                setIsAddingToCart(true);
+                startComponentLoading('addToCart', 'Adding to cart...');
+                
+                const cartItem = {
+                  id: `${product.id}-${selectedSize}-${selectedColor}`,
+                  productId: product.id,
+                  name: product.name,
+                  category: category?.name,
+                  size: selectedSize,
+                  color: colorOptions.find(c => c.name === selectedColor)?.label,
+                  price: discountedPrice,
+                  image: product.image,
+                  quantity: 1
+                };
+                
+                const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                const existingItemIndex = existingCart.findIndex(item => item.id === cartItem.id);
+                
+                if (existingItemIndex >= 0) {
+                  existingCart[existingItemIndex].quantity += 1;
+                } else {
+                  existingCart.push(cartItem);
                 }
-              }, 4000);
+                
+                localStorage.setItem('cart', JSON.stringify(existingCart));
+                
+                // Dispatch custom event to update navbar cart count
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                
+                // Simulate a small delay for better UX
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Show success banner
+                const banner = document.createElement('div');
+                banner.className = 'success-banner';
+                banner.innerHTML = `
+                  <div class="banner-content">
+                    <span>✅ Product added to cart successfully!</span>
+                    <button class="view-cart-btn">View Cart</button>
+                  </div>
+                `;
+                
+                document.body.appendChild(banner);
+                
+                // Add click event to view cart button
+                setTimeout(() => {
+                  const viewCartBtn = banner.querySelector('.view-cart-btn');
+                  viewCartBtn.addEventListener('click', () => {
+                    window.location.href = '/cart';
+                  });
+                }, 100);
+                
+                // Remove banner after 4 seconds
+                setTimeout(() => {
+                  if (banner.parentNode) {
+                    banner.parentNode.removeChild(banner);
+                  }
+                }, 4000);
+              } catch (error) {
+                console.error('Error adding to cart:', error);
+              } finally {
+                setIsAddingToCart(false);
+                stopComponentLoading('addToCart');
+              }
             }}
             className="add-to-cart-btn"
+            disabled={isAddingToCart || isComponentLoading('addToCart')}
           >
-            🛒 Add to Cart
+            {isAddingToCart || isComponentLoading('addToCart') ? (
+              <Loading size="small" color="light" showText={false} />
+            ) : (
+              '🛒 Add to Cart'
+            )}
           </button>
           
           <button 

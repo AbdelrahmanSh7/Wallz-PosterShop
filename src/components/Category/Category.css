@@ -83,7 +83,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   color: white;
   padding: 6px 12px;
   border-radius: 15px;
@@ -156,10 +156,10 @@
 }
 
 .discounted-price-overlay {
-  color: #e1306c;
+  color: #2c2c2c;
   font-size: 1.15em;
   font-weight: 700;
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -170,7 +170,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   color: white;
   padding: 6px 12px;
   border-radius: 15px;
@@ -203,10 +203,10 @@
 }
 
 .category-slider-section .discounted-price-overlay {
-  color: #e1306c;
+  color: #2c2c2c;
   font-size: 1.15em;
   font-weight: 700;
-  background: linear-gradient(135deg, #e1306c, #ff6b6b);
+  background: linear-gradient(135deg, #2c2c2c, #404040);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

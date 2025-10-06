@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { products } from '../../data/products';
 import { Link } from 'react-router-dom';
+import { useLoadingContext } from '../Loading/LoadingProvider';
+import Loading from '../Loading/Loading';
 import '../Category/Category.css';
 
 function getRandomProducts(arr, n) {
@@ -9,7 +11,35 @@ function getRandomProducts(arr, n) {
 }
 
 function Home() {
-  const randomProducts = getRandomProducts(products, 16);
+  const { startComponentLoading, stopComponentLoading, isComponentLoading } = useLoadingContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const [randomProducts, setRandomProducts] = useState([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        startComponentLoading('homeProducts', 'Loading products...');
+        setIsLoading(true);
+        
+        // Simulate loading time for better UX
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const randomProducts = getRandomProducts(products, 16);
+        setRandomProducts(randomProducts);
+        console.log('✅ Featured products loaded:', randomProducts.length);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        // Fallback: load products immediately
+        const randomProducts = getRandomProducts(products, 16);
+        setRandomProducts(randomProducts);
+      } finally {
+        setIsLoading(false);
+        stopComponentLoading('homeProducts');
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   // Remove automatic scroll to top - keep page at top when opened
   // const topRef = useRef(null);
@@ -39,6 +69,36 @@ function Home() {
     if (originalPrice === 329) originalPrice = 330;
     return originalPrice;
   };
+
+  if (isLoading || isComponentLoading('homeProducts')) {
+    return (
+      <div className="home-loading">
+        <Loading 
+          size="large" 
+          color="primary" 
+          text="Loading featured products..." 
+        />
+      </div>
+    );
+  }
+
+  // Fallback if no products loaded
+  if (randomProducts.length === 0) {
+    return (
+      <div className="category-slider-section">
+        <h2 className="slider-title">Featured Posters</h2>
+        <div className="no-products-message">
+          <p>No products available at the moment.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="retry-button"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="category-slider-section">
