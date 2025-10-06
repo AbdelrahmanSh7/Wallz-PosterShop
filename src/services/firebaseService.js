@@ -3,6 +3,7 @@ import {
   collection, 
   addDoc, 
   getDocs, 
+  getDoc,
   doc, 
   updateDoc, 
   deleteDoc, 
