@@ -18,6 +18,7 @@ import {
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import dataSync from '../../utils/dataSync';
+import crossDeviceSync from '../../utils/crossDeviceSync';
 import './AdminOrders.css';
 
 function AdminOrders() {
@@ -63,15 +64,45 @@ function AdminOrders() {
       }
     };
 
-    // Add event listener
+    // Handle cross-device sync updates
+    const handleCrossDeviceSync = (event) => {
+      console.log('Cross-device sync update:', event.detail);
+      
+      // Reload orders from localStorage
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(updatedOrders);
+      
+      // Show notification
+      if (event.detail.type === 'SYNC_UPDATE') {
+        console.log('Orders synced from another device');
+      }
+    };
+
+    // Handle refresh requests
+    const handleOrdersRefresh = (event) => {
+      console.log('Orders refresh requested:', event.detail);
+      
+      // Reload orders from localStorage
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(updatedOrders);
+    };
+
+    // Add event listeners
     window.addEventListener('ordersUpdated', handleOrdersUpdate);
+    window.addEventListener('crossDeviceSync', handleCrossDeviceSync);
+    window.addEventListener('ordersRefresh', handleOrdersRefresh);
 
     // Request notification permission
     dataSync.requestNotificationPermission();
 
+    // Start cross-device sync
+    crossDeviceSync.forceSync();
+
     // Cleanup
     return () => {
       window.removeEventListener('ordersUpdated', handleOrdersUpdate);
+      window.removeEventListener('crossDeviceSync', handleCrossDeviceSync);
+      window.removeEventListener('ordersRefresh', handleOrdersRefresh);
     };
   }, []);
 
@@ -266,6 +297,19 @@ function AdminOrders() {
     localStorage.removeItem('adminLoggedIn');
     localStorage.removeItem('adminLoginTime');
     navigate('/admin/login');
+  };
+
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    console.log('Manual refresh triggered');
+    crossDeviceSync.forceSync();
+    
+    // Reload orders from localStorage
+    const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    setOrders(updatedOrders);
+    
+    // Show success message
+    alert('Orders refreshed successfully!');
   };
 
   const formatDate = (dateString) => {
@@ -467,6 +511,10 @@ function AdminOrders() {
             <option value="name-desc">👤 Name Z-A</option>
           </select>
         </div>
+        <button onClick={handleManualRefresh} className="refresh-btn">
+          🔄
+          Refresh Orders
+        </button>
         <button onClick={exportToExcel} className="export-excel-btn">
           <FaFileExcel />
           Export to Excel
