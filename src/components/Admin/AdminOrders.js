@@ -145,30 +145,36 @@ function AdminOrders() {
 
   // Listen for Firebase real-time updates
   useEffect(() => {
-    const handleFirebaseUpdate = (event) => {
-      console.log('🔥 Firebase orders updated:', event.detail.orders.length);
-      
-      setOrders(event.detail.orders);
-      setFilteredOrders(event.detail.orders);
-      
-      // Mark new orders (created in last 24 hours)
-      const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const newOrderIds = event.detail.orders
-        .filter(order => new Date(order.date) > oneDayAgo)
-        .map(order => order.id);
-      setNewOrders(new Set(newOrderIds));
-      
-      // Show notification for new orders
-      if (event.detail.orders.length > orders.length) {
-        console.log('🛍️ New order detected via Firebase!');
-        const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
-        if (newOrderIds.length > 0 && !isAdminPanelOpen) {
-          setNotificationCount(newOrderIds.length);
-          setShowNotification(true);
+    console.log('👂 Setting up Firebase real-time listener...');
+    
+    const unsubscribe = firebaseService.subscribeToOrders((result) => {
+      if (result.success) {
+        console.log('🔥 Firebase orders updated:', result.orders.length);
+        
+        setOrders(result.orders);
+        setFilteredOrders(result.orders);
+        
+        // Mark new orders (created in last 24 hours)
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const newOrderIds = result.orders
+          .filter(order => new Date(order.date) > oneDayAgo)
+          .map(order => order.id);
+        setNewOrders(new Set(newOrderIds));
+        
+        // Show notification for new orders
+        if (result.orders.length > orders.length) {
+          console.log('🛍️ New order detected via Firebase!');
+          const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+          if (newOrderIds.length > 0 && !isAdminPanelOpen) {
+            setNotificationCount(newOrderIds.length);
+            setShowNotification(true);
+          }
         }
+      } else {
+        console.error('❌ Firebase real-time listener error:', result.error);
       }
-    };
+    });
 
     // Hide NEW badges after 5 seconds
     const hideNewBadges = () => {
@@ -179,12 +185,11 @@ function AdminOrders() {
 
     hideNewBadges();
 
-    // Add event listener
-    window.addEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
-
     // Cleanup
     return () => {
-      window.removeEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, [orders.length]);
 
@@ -275,44 +280,61 @@ function AdminOrders() {
   };
 
   const deleteOrder = async (orderId) => {
+    console.log('🗑️ Delete button clicked for order:', orderId);
+    
     const confirmed = await showAlert(
-      'Are you sure you want to delete this order?',
+      'هل أنت متأكد من حذف هذا الطلب نهائياً؟',
       'delete',
       { 
         showCancel: true, 
-        confirmText: 'Delete', 
-        cancelText: 'Cancel' 
+        confirmText: 'حذف نهائياً', 
+        cancelText: 'إلغاء' 
       }
     );
     
     if (confirmed) {
       try {
         console.log('🗑️ Attempting to delete order:', orderId);
+        console.log('📊 Current orders count before delete:', orders.length);
         
         // Delete from Firebase
+        console.log('🔥 Calling firebaseService.deleteOrder...');
         const firebaseResult = await firebaseService.deleteOrder(orderId);
-        console.log('Firebase delete result:', firebaseResult);
+        console.log('🔥 Firebase delete result:', firebaseResult);
         
         if (firebaseResult.success) {
           console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
           
           // Update local state immediately
           const updatedOrders = orders.filter(order => order.id !== orderId);
+          console.log('📊 Updated orders count after delete:', updatedOrders.length);
+          
           setOrders(updatedOrders);
           setFilteredOrders(updatedOrders);
           
           // Also update localStorage as backup
           localStorage.setItem('orders', JSON.stringify(updatedOrders));
+          console.log('💾 Updated localStorage with new orders');
+          
+          // Remove from new orders set if it was there
+          setNewOrders(prev => {
+            const updated = new Set(prev);
+            updated.delete(orderId);
+            return updated;
+          });
           
           await showAlert('تم حذف الطلب نهائياً من النظام', 'success');
+          console.log('✅ Delete operation completed successfully');
         } else {
           console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
-          await showAlert('حدث خطأ في حذف الطلب من Firebase. يرجى المحاولة مرة أخرى.', 'error');
+          await showAlert(`حدث خطأ في حذف الطلب من Firebase: ${firebaseResult.error}`, 'error');
         }
       } catch (error) {
         console.error('❌ Error deleting order:', error);
-        await showAlert('حدث خطأ في حذف الطلب. يرجى المحاولة مرة أخرى.', 'error');
+        await showAlert(`حدث خطأ في حذف الطلب: ${error.message}`, 'error');
       }
+    } else {
+      console.log('❌ Delete operation cancelled by user');
     }
   };
 
@@ -341,6 +363,22 @@ function AdminOrders() {
       setFilteredOrders(updatedOrders);
       
       alert(`⚠️ Firebase unavailable, using local data.\nFound ${updatedOrders.length} orders.`);
+    }
+  };
+
+  // Test delete functionality
+  const testDeleteFunction = async () => {
+    try {
+      console.log('🧪 Testing delete functionality...');
+      const result = await firebaseService.testDelete();
+      if (result.success) {
+        await showAlert('اختبار الحذف نجح!', 'success');
+      } else {
+        await showAlert(`اختبار الحذف فشل: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error testing delete:', error);
+      await showAlert(`خطأ في اختبار الحذف: ${error.message}`, 'error');
     }
   };
 
@@ -572,6 +610,10 @@ function AdminOrders() {
         <button onClick={handleManualRefresh} className="refresh-btn">
           🔄
           Refresh Orders
+        </button>
+        <button onClick={testDeleteFunction} className="test-delete-btn">
+          🧪
+          Test Delete
         </button>
         <button onClick={exportToExcel} className="export-excel-btn">
           <FaFileExcel />

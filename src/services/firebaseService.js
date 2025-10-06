@@ -1,68 +1,41 @@
-// Firebase service for orders management
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  getDoc,
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db } from '../config/firebaseConfig';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDbXnV4r3kDBrV_OpbKSfnf8p0vCYEpcKk",
+  authDomain: "wallz-edc33.firebaseapp.com",
+  projectId: "wallz-edc33",
+  storageBucket: "wallz-edc33.firebasestorage.app",
+  messagingSenderId: "272258313663",
+  appId: "1:272258313663:web:c0af764ea6d55aeed7c50a",
+  measurementId: "G-JR4B7002ST"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log('🔥 Firebase initialized successfully');
 
 class FirebaseService {
   constructor() {
+    this.db = db;
     this.ordersCollection = 'orders';
-    this.setupRealtimeListener();
   }
 
-  // Setup real-time listener for orders
-  setupRealtimeListener() {
-    const ordersQuery = query(
-      collection(db, this.ordersCollection),
-      orderBy('createdAt', 'desc')
-    );
-
-    onSnapshot(ordersQuery, (snapshot) => {
-      const orders = [];
-      snapshot.forEach((doc) => {
-        const orderData = doc.data();
-        // Only include orders that are not marked as deleted
-        if (!orderData.deleted) {
-          orders.push({
-            id: doc.id,
-            ...orderData
-          });
-        }
-      });
-
-      // Trigger custom event for components to update
-      window.dispatchEvent(new CustomEvent('firebaseOrdersUpdate', {
-        detail: { orders }
-      }));
-
-      console.log('🔥 Firebase orders updated:', orders.length, 'orders');
-    }, (error) => {
-      console.error('❌ Firebase listener error:', error);
-    });
-  }
-
-  // Add new order
-  async addOrder(orderData) {
+  // Save order to Firebase
+  async saveOrder(orderData) {
     try {
-      const orderWithTimestamp = {
-        ...orderData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-
-      const docRef = await addDoc(collection(db, this.ordersCollection), orderWithTimestamp);
+      console.log('💾 Saving order to Firebase:', orderData);
       
-      console.log('✅ Order added to Firebase with ID:', docRef.id);
+      const docRef = await addDoc(collection(this.db, this.ordersCollection), {
+        ...orderData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      console.log('✅ Order saved to Firebase with ID:', docRef.id);
       
       return {
         success: true,
@@ -70,7 +43,7 @@ class FirebaseService {
         data: orderData
       };
     } catch (error) {
-      console.error('❌ Error adding order to Firebase:', error);
+      console.error('❌ Error saving order to Firebase:', error);
       return {
         success: false,
         error: error.message
@@ -78,36 +51,30 @@ class FirebaseService {
     }
   }
 
-  // Get all orders
+  // Get all orders from Firebase
   async getOrders() {
     try {
-      const querySnapshot = await getDocs(collection(db, this.ordersCollection));
-      const orders = [];
+      console.log('📥 Loading orders from Firebase...');
       
+      const ordersRef = collection(this.db, this.ordersCollection);
+      const q = query(ordersRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      
+      const orders = [];
       querySnapshot.forEach((doc) => {
-        const orderData = doc.data();
-        // Only include orders that are not marked as deleted
-        if (!orderData.deleted) {
-          orders.push({
-            id: doc.id,
-            ...orderData
-          });
-        }
+        orders.push({
+          id: doc.id,
+          ...doc.data()
+        });
       });
-
-      // Sort by creation date (newest first)
-      orders.sort((a, b) => {
-        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
-        return dateB - dateA;
-      });
-
+      
+      console.log(`✅ Orders loaded from Firebase: ${orders.length} orders`);
       return {
         success: true,
-        orders
+        orders: orders
       };
     } catch (error) {
-      console.error('❌ Error getting orders from Firebase:', error);
+      console.error('❌ Error loading orders from Firebase:', error);
       return {
         success: false,
         error: error.message,
@@ -116,16 +83,50 @@ class FirebaseService {
     }
   }
 
-  // Update order status
+  // Delete order from Firebase
+  async deleteOrder(orderId) {
+    try {
+      console.log('🗑️ Deleting order from Firebase:', orderId);
+      console.log('📊 Database:', this.db);
+      console.log('📊 Collection:', this.ordersCollection);
+      
+      const orderRef = doc(this.db, this.ordersCollection, orderId);
+      console.log('📊 Order reference:', orderRef);
+      
+      await deleteDoc(orderRef);
+      
+      console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
+      
+      return {
+        success: true,
+        id: orderId
+      };
+    } catch (error) {
+      console.error('❌ Error deleting order from Firebase:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  // Update order status in Firebase
   async updateOrderStatus(orderId, newStatus) {
     try {
-      const orderRef = doc(db, this.ordersCollection, orderId);
+      console.log(`🔄 Updating order ${orderId} status to: ${newStatus}`);
+      
+      const orderRef = doc(this.db, this.ordersCollection, orderId);
       await updateDoc(orderRef, {
         status: newStatus,
-        updatedAt: serverTimestamp()
+        updatedAt: new Date()
       });
-
-      console.log('✅ Order status updated in Firebase:', orderId, '→', newStatus);
+      
+      console.log(`✅ Order ${orderId} status updated to ${newStatus}`);
       
       return {
         success: true,
@@ -133,7 +134,7 @@ class FirebaseService {
         status: newStatus
       };
     } catch (error) {
-      console.error('❌ Error updating order status in Firebase:', error);
+      console.error('❌ Error updating order status:', error);
       return {
         success: false,
         error: error.message
@@ -141,23 +142,62 @@ class FirebaseService {
     }
   }
 
-  // Delete order (mark as deleted instead of actual deletion)
-  async deleteOrder(orderId) {
+  // Listen to real-time updates
+  subscribeToOrders(callback) {
     try {
-      const orderRef = doc(db, this.ordersCollection, orderId);
-      await updateDoc(orderRef, {
-        deleted: true,
-        deletedAt: serverTimestamp()
+      console.log('👂 Setting up real-time listener for orders...');
+      
+      const ordersRef = collection(this.db, this.ordersCollection);
+      const q = query(ordersRef, orderBy('createdAt', 'desc'));
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const orders = [];
+        querySnapshot.forEach((doc) => {
+          orders.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        console.log(`🔥 Firebase orders updated: ${orders.length} orders`);
+        callback({
+          success: true,
+          orders: orders
+        });
+      }, (error) => {
+        console.error('❌ Error in real-time listener:', error);
+        callback({
+          success: false,
+          error: error.message,
+          orders: []
+        });
       });
       
-      console.log('✅ Order marked as deleted in Firebase:', orderId);
+      return unsubscribe;
+    } catch (error) {
+      console.error('❌ Error setting up real-time listener:', error);
+      return null;
+    }
+  }
+
+  // Test Firebase connection
+  async testConnection() {
+    try {
+      console.log('🧪 Testing Firebase connection...');
       
+      const testRef = collection(this.db, 'test');
+      await addDoc(testRef, {
+        message: 'Firebase connection test',
+        timestamp: new Date()
+      });
+      
+      console.log('✅ Firebase connection test successful');
       return {
         success: true,
-        id: orderId
+        message: 'Firebase connection is working'
       };
     } catch (error) {
-      console.error('❌ Error marking order as deleted in Firebase:', error);
+      console.error('❌ Firebase connection test failed:', error);
       return {
         success: false,
         error: error.message
@@ -165,83 +205,41 @@ class FirebaseService {
     }
   }
 
-  // Get order by ID
-  async getOrderById(orderId) {
+  // Test delete functionality
+  async testDelete() {
     try {
-      const orderRef = doc(db, this.ordersCollection, orderId);
-      const orderDoc = await getDoc(orderRef);
+      console.log('🧪 Testing delete functionality...');
       
-      if (orderDoc.exists()) {
+      // First, get all orders to see what we have
+      const ordersResult = await this.getOrders();
+      console.log('📊 Current orders:', ordersResult.orders.length);
+      
+      if (ordersResult.orders.length > 0) {
+        const firstOrder = ordersResult.orders[0];
+        console.log('📊 First order ID:', firstOrder.id);
+        
+        // Try to delete the first order
+        const deleteResult = await this.deleteOrder(firstOrder.id);
+        console.log('📊 Delete result:', deleteResult);
+        
+        return deleteResult;
+      } else {
+        console.log('📊 No orders to test delete with');
         return {
           success: true,
-          order: {
-            id: orderDoc.id,
-            ...orderDoc.data()
-          }
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Order not found'
+          message: 'No orders to test delete with'
         };
       }
     } catch (error) {
-      console.error('❌ Error getting order from Firebase:', error);
+      console.error('❌ Test delete failed:', error);
       return {
         success: false,
         error: error.message
-      };
-    }
-  }
-
-  // Get orders count
-  async getOrdersCount() {
-    try {
-      const querySnapshot = await getDocs(collection(db, this.ordersCollection));
-      return {
-        success: true,
-        count: querySnapshot.size
-      };
-    } catch (error) {
-      console.error('❌ Error getting orders count from Firebase:', error);
-      return {
-        success: false,
-        error: error.message,
-        count: 0
-      };
-    }
-  }
-
-  // Get total revenue
-  async getTotalRevenue() {
-    try {
-      const querySnapshot = await getDocs(collection(db, this.ordersCollection));
-      let totalRevenue = 0;
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.status !== 'cancelled') {
-          const subtotal = data.subtotal || (data.total - (data.shipping || data.shippingCost || 0)) || 0;
-          totalRevenue += subtotal;
-        }
-      });
-
-      return {
-        success: true,
-        revenue: totalRevenue
-      };
-    } catch (error) {
-      console.error('❌ Error getting total revenue from Firebase:', error);
-      return {
-        success: false,
-        error: error.message,
-        revenue: 0
       };
     }
   }
 }
 
-// Create global instance
+// Create and export a singleton instance
 const firebaseService = new FirebaseService();
-
 export default firebaseService;
