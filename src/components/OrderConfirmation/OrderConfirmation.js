@@ -1,21 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { FaCheckCircle, FaTruck, FaClock, FaMapMarkerAlt, FaPhone, FaShoppingBag, FaUser } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './OrderConfirmation.css';
 
 function OrderConfirmation() {
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
-    // Get the latest order from localStorage
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    if (orders.length > 0) {
-      const latestOrder = orders[orders.length - 1];
-      setOrderData(latestOrder);
+    // Get order data from navigation state (passed from Cart)
+    if (location.state && location.state.order) {
+      setOrderData(location.state.order);
+      setLoading(false);
+    } else {
+      // Fallback: Get the latest order from localStorage
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      if (orders.length > 0) {
+        const latestOrder = orders[orders.length - 1];
+        setOrderData(latestOrder);
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [location.state]);
 
   if (loading) {
     return (

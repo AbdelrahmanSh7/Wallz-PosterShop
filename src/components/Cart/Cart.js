@@ -198,11 +198,13 @@ function Cart() {
     });
     setShowCustomerForm(false);
 
+    // Navigate to confirmation page with order data
+    navigate('/order-confirmation', { state: { order } });
   };
 
 
   // Handle Submit order
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (!validateCustomerData()) {
       setShowCustomerForm(true);
       setShowAlert(true);
@@ -210,9 +212,8 @@ function Cart() {
       return;
     }
     
-    // Save order and redirect to confirmation page
-    saveOrder();
-    navigate('/order-confirmation');
+    // Save order and redirect to confirmation page with order data
+    await saveOrder();
   };
 
   if (cartItems.length === 0) {

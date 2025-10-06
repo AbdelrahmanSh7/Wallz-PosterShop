@@ -49,6 +49,8 @@ export const sendNewOrderNotification = async (orderData) => {
       if (result.success) {
         console.log('✅ Email sent successfully via EmailJS');
         return { success: true, method: 'emailjs' };
+      } else {
+        console.log('⚠️ EmailJS failed, using console fallback');
       }
     } catch (error) {
       console.log('⚠️ EmailJS not configured, using console fallback');

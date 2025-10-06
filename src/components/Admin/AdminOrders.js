@@ -30,6 +30,7 @@ function AdminOrders() {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [deletedOrderIds, setDeletedOrderIds] = useState(new Set());
 
   // Check if admin is logged in
   useEffect(() => {
@@ -39,6 +40,12 @@ function AdminOrders() {
       return;
     }
   }, [navigate]);
+
+  // Load deleted orders on component mount
+  useEffect(() => {
+    const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+    setDeletedOrderIds(new Set(deletedOrders));
+  }, []);
 
   // Load orders from Firebase
   useEffect(() => {
@@ -53,15 +60,24 @@ function AdminOrders() {
 
       const result = await firebaseService.getOrders();
       if (result.success) {
-        setOrders(result.orders);
-        setFilteredOrders(result.orders);
-        console.log('✅ Orders loaded from Firebase:', result.orders.length);
+        // Get deleted orders from localStorage
+        const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+        const deletedSet = new Set(deletedOrders);
+        
+        // Filter out deleted orders
+        const filteredOrders = result.orders.filter(order => !deletedSet.has(order.id));
+        setOrders(filteredOrders);
+        setFilteredOrders(filteredOrders);
+        console.log('✅ Orders loaded from Firebase:', filteredOrders.length, '(filtered from', result.orders.length, 'total)');
       } else {
         console.error('❌ Failed to load orders from Firebase:', result.error);
         // Fallback to localStorage
         const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        setOrders(savedOrders);
-        setFilteredOrders(savedOrders);
+        const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+        const deletedSet = new Set(deletedOrders);
+        const filteredOrders = savedOrders.filter(order => !deletedSet.has(order.id));
+        setOrders(filteredOrders);
+        setFilteredOrders(filteredOrders);
       }
     };
 
@@ -73,11 +89,17 @@ function AdminOrders() {
     const handleFirebaseUpdate = (event) => {
       console.log('🔥 Firebase orders updated:', event.detail.orders.length);
       
-      setOrders(event.detail.orders);
-      setFilteredOrders(event.detail.orders);
+      // Get deleted orders from localStorage
+      const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+      const deletedSet = new Set(deletedOrders);
+      
+      // Filter out deleted orders
+      const filteredOrders = event.detail.orders.filter(order => !deletedSet.has(order.id));
+      setOrders(filteredOrders);
+      setFilteredOrders(filteredOrders);
       
       // Show notification for new orders
-      if (event.detail.orders.length > orders.length) {
+      if (filteredOrders.length > orders.length) {
         console.log('🛍️ New order detected via Firebase!');
       }
     };
@@ -89,7 +111,7 @@ function AdminOrders() {
     return () => {
       window.removeEventListener('firebaseOrdersUpdate', handleFirebaseUpdate);
     };
-  }, [orders.length]);
+  }, [deletedOrderIds, orders.length]);
 
   // Auto-export to Excel every 5 minutes
   useEffect(() => {
@@ -283,6 +305,9 @@ function AdminOrders() {
         if (firebaseResult.success) {
           console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
           
+          // Add to deleted orders list
+          setDeletedOrderIds(prev => new Set([...prev, orderId]));
+          
           // Update local state immediately
           const updatedOrders = orders.filter(order => order.id !== orderId);
           setOrders(updatedOrders);
@@ -290,6 +315,11 @@ function AdminOrders() {
           
           // Also update localStorage as backup
           localStorage.setItem('orders', JSON.stringify(updatedOrders));
+          
+          // Save deleted orders to localStorage
+          const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+          deletedOrders.push(orderId);
+          localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
           
           alert('تم حذف الطلب بنجاح');
         } else {
@@ -304,6 +334,15 @@ function AdminOrders() {
   };
 
 
+  // Clear deleted orders from localStorage (permanent cleanup)
+  const clearDeletedOrders = () => {
+    if (window.confirm('Are you sure you want to permanently clear all deleted orders from memory? This action cannot be undone.')) {
+      localStorage.removeItem('deletedOrders');
+      setDeletedOrderIds(new Set());
+      alert('✅ Deleted orders cleared from memory successfully!');
+    }
+  };
+
   // Manual refresh function
   const handleManualRefresh = async () => {
     console.log('🔄 Manual refresh triggered');
@@ -312,11 +351,17 @@ function AdminOrders() {
     const result = await firebaseService.getOrders();
     
     if (result.success) {
-      setOrders(result.orders);
-      setFilteredOrders(result.orders);
+      // Get deleted orders from localStorage
+      const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+      const deletedSet = new Set(deletedOrders);
+      
+      // Filter out deleted orders
+      const filteredOrders = result.orders.filter(order => !deletedSet.has(order.id));
+      setOrders(filteredOrders);
+      setFilteredOrders(filteredOrders);
       
       // Show success message
-      alert(`✅ Orders refreshed successfully!\nFound ${result.orders.length} orders from Firebase.`);
+      alert(`✅ Orders refreshed successfully!\nFound ${filteredOrders.length} orders from Firebase (filtered from ${result.orders.length} total).`);
       console.log(`✅ Found ${result.orders.length} orders from Firebase`);
     } else {
       console.error('❌ Failed to refresh orders from Firebase:', result.error);
@@ -481,6 +526,11 @@ function AdminOrders() {
                 <span className="stat-number">${getTotalRevenue()}</span>
                 <span className="stat-label">Total Revenue</span>
               </div>
+            </div>
+            <div className="stat-card">
+              <button onClick={clearDeletedOrders} className="clear-deleted-btn" title="Clear deleted orders from memory">
+                🗑️ Clear Deleted
+              </button>
             </div>
           </div>
         </div>

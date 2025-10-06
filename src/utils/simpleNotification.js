@@ -42,7 +42,11 @@ class SimpleNotification {
 
   // Handle new order from custom event
   handleNewOrder(orderData) {
-    this.showOrderNotification(orderData);
+    // Only show notifications if admin is logged in
+    const isAdminLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+    if (isAdminLoggedIn) {
+      this.showOrderNotification(orderData);
+    }
     this.sendEmailNotification(orderData);
   }
 
