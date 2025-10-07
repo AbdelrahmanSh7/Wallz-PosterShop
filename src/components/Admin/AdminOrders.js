@@ -54,7 +54,7 @@ function AdminOrders() {
     }
   }, [navigate]);
 
-  // Update deleted orders count
+  // Update deleted orders count and auto-refresh
   useEffect(() => {
     const updateDeletedCount = () => {
       const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
@@ -68,9 +68,57 @@ function AdminOrders() {
       updateDeletedCount();
     };
     
+    // Auto-refresh orders every 30 seconds for cross-device sync
+    const refreshInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Auto-refreshing orders for cross-device sync...');
+        const result = await firebaseService.getOrders();
+        if (result.success) {
+          // Get deleted orders from Firebase for cross-device sync
+          const deletedOrdersResult = await firebaseService.getDeletedOrders();
+          let deletedOrderIds = [];
+          
+          if (deletedOrdersResult.success) {
+            const firebaseDeletedOrders = deletedOrdersResult.deletedOrders || [];
+            deletedOrderIds = firebaseDeletedOrders.map(order => order.originalId || order.id);
+            // Update localStorage with Firebase data
+            localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
+            setDeletedOrdersCount(firebaseDeletedOrders.length);
+            console.log('✅ Deleted orders synced from Firebase:', firebaseDeletedOrders.length);
+          } else {
+            // Fallback to localStorage
+            deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+          }
+          
+          const activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          
+          // Only update if orders have changed
+          if (JSON.stringify(activeOrders) !== JSON.stringify(orders)) {
+            setOrders(activeOrders);
+            setFilteredOrders(activeOrders);
+            console.log('🔄 Orders updated from Firebase:', activeOrders.length);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Auto-refresh failed:', error);
+      }
+    }, 30000); // Refresh every 30 seconds
+    
+    // Listen for custom orders update event
+    const handleOrdersUpdate = () => {
+      console.log('🔄 Orders update event received, refreshing...');
+      // Trigger a manual refresh
+      window.location.reload();
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    window.addEventListener('ordersUpdated', handleOrdersUpdate);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('ordersUpdated', handleOrdersUpdate);
+      clearInterval(refreshInterval);
+    };
+  }, [orders]);
 
   // Helper function to clean deleted orders from localStorage
   const cleanDeletedOrdersFromStorage = () => {
@@ -403,6 +451,10 @@ function AdminOrders() {
               const syncResult = await firebaseService.saveDeletedOrders(deletedOrders);
               if (syncResult.success) {
                 console.log('✅ Deleted orders synced to Firebase successfully');
+                // Trigger immediate refresh for cross-device sync
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('ordersUpdated'));
+                }, 1000);
               } else {
                 console.error('❌ Failed to sync deleted orders to Firebase:', syncResult.error);
               }
@@ -581,6 +633,10 @@ function AdminOrders() {
           const syncResult = await firebaseService.saveDeletedOrders(deletedOrders);
           if (syncResult.success) {
             console.log('✅ All deleted orders synced to Firebase successfully');
+            // Trigger immediate refresh for cross-device sync
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('ordersUpdated'));
+            }, 1000);
           } else {
             console.error('❌ Failed to sync deleted orders to Firebase:', syncResult.error);
           }
@@ -660,9 +716,10 @@ function AdminOrders() {
     }
   };
 
-  const getTotalOrders = () => orders.length;
+  const getTotalOrders = () => filteredOrders.length;
   const getTotalRevenue = () => {
-    return orders.reduce((sum, order) => {
+    // Use filtered orders to exclude deleted orders
+    return filteredOrders.reduce((sum, order) => {
       // استبعاد الطلبات الملغية
       if (order.status === 'cancelled') {
         return sum;
@@ -673,6 +730,7 @@ function AdminOrders() {
       return sum + subtotal;
     }, 0);
   };
+
 
   // Check if order is new (within last 24 hours)
   const isNewOrder = (order) => {

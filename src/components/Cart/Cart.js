@@ -244,6 +244,17 @@ function Cart() {
         console.error('❌ Email sending error:', error);
       }
       
+      // Also try the old email service as backup
+      try {
+        const { sendNewOrderNotification } = await import('../../utils/emailService');
+        const backupEmailResult = await sendNewOrderNotification(order);
+        if (backupEmailResult.success) {
+          console.log('✅ Backup email sent successfully');
+        }
+      } catch (error) {
+        console.error('❌ Backup email failed:', error);
+      }
+      
       // Trigger new order notification
       simpleNotification.triggerNewOrderEvent(order);
     } else {

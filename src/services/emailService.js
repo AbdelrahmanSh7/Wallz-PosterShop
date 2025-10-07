@@ -25,6 +25,12 @@ class EmailService {
 
   // Send new order notification email with retry mechanism
   async sendNewOrderEmail(orderData) {
+    // Check if EmailJS is properly configured
+    if (this.publicKey === 'YOUR_PUBLIC_KEY' || this.serviceId === 'service_wallz') {
+      console.warn('⚠️ EmailJS not configured properly. Please update emailConfig.js with your actual values.');
+      return { success: false, error: 'EmailJS not configured' };
+    }
+    
     return await this.sendEmailWithRetry(
       () => this.sendNewOrderEmailInternal(orderData),
       'new order notification'
