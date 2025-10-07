@@ -1,149 +1,176 @@
-# إعداد نظام الإيميلات - EmailJS
+# 📧 Email Setup Instructions - تعليمات إعداد الإيميل
 
-## الخطوة 1: إنشاء حساب EmailJS
+## ✅ تم إعداد نظام الإيميل التلقائي!
 
+### **🎯 الميزة الجديدة:**
+- **إرسال إيميل تلقائي** عند وصول طلب جديد
+- **رسالة حماسية باللغة الإنجليزية** لـ wallz.egy@gmail.com
+- **إرسال إيميل** عند تحديث حالة الطلب
+
+### **🔧 الملفات المضافة:**
+
+#### **1. `src/services/emailService.js`:**
+- خدمة الإيميل الرئيسية
+- إرسال إيميلات الطلبات الجديدة
+- إرسال إيميلات تحديث الحالة
+- آلية إعادة المحاولة
+
+#### **2. `src/config/emailConfig.js`:**
+- إعدادات EmailJS
+- قوالب الإيميل
+- إعدادات الإدارة
+
+#### **3. `src/templates/emailTemplates.js`:**
+- قوالب HTML للإيميلات
+- تصميم احترافي وجذاب
+- رسائل حماسية باللغة الإنجليزية
+
+### **📧 خطوات الإعداد:**
+
+#### **1. إنشاء حساب EmailJS:**
 1. اذهب إلى [https://www.emailjs.com/](https://www.emailjs.com/)
 2. أنشئ حساب مجاني
-3. سجل دخول إلى لوحة التحكم
+3. اربط حساب Gmail الخاص بك
 
-## الخطوة 2: إعداد خدمة الإيميل
+#### **2. إنشاء خدمة الإيميل:**
+1. في لوحة تحكم EmailJS
+2. اضغط على "Add New Service"
+3. اختر "Gmail"
+4. اربط حساب wallz.egy@gmail.com
+5. احفظ Service ID
 
-1. في لوحة التحكم، اذهب إلى **"Email Services"**
-2. اضغط **"Add New Service"**
-3. اختر **Gmail** (أو أي خدمة إيميل أخرى)
-4. اتبع التعليمات لإعداد Gmail
-5. احفظ **Service ID** (مثل: `service_xxxxxxx`)
+#### **3. إنشاء قوالب الإيميل:**
 
-## الخطوة 3: إنشاء قوالب الإيميل
+##### **قالب الطلب الجديد (template_new_order):**
+```html
+Subject: 🎉 NEW ORDER ALERT! - WallZ Store
 
-### قالب "طلب جديد" (NEW_ORDER):
+🎉 NEW ORDER ALERT!
 
-**Subject:** 🛒 New Order Received - Order #{{order_id}}
-
-**Body:**
-```
-Dear Admin,
-
-A new order has been received:
+A new order has just been placed on your WallZ store!
 
 Order Details:
-==============
-Order ID: {{order_id}}
-Customer Name: {{customer_name}}
-Phone: {{customer_phone}}
-Governorate: {{customer_governorate}}
-Address: {{customer_address}}
-Order Date: {{order_date}}
-Status: {{order_status}}
-Total Amount: {{order_total}} EGP
-Subtotal: {{order_subtotal}} EGP
-Shipping: {{order_shipping}} EGP
+- Order ID: {{order_id}}
+- Date: {{order_date}}
+- Customer: {{customer_name}}
+- Phone: {{customer_phone1}}
+- Address: {{customer_address}}, {{customer_governorate}}
+- Total: {{total_amount}} EGP
+- Items: {{items_count}} items
 
-Items ({{items_count}}):
-=======================
-{{items_details}}
+Items List:
+{{items_list}}
 
-Please check your admin panel to process this order.
+Action Required: Process this order as soon as possible!
 
-Best regards,
-Wallz Poster Shop
-{{site_url}}
+© 2024 WallZ - Your Wall Art Store
 ```
 
-### قالب "تحديث حالة الطلب" (STATUS_UPDATE):
+##### **قالب تحديث الحالة (template_status_update):**
+```html
+Subject: 📊 Order Status Updated - WallZ Store
 
-**Subject:** 🔄 Order Status Updated - Order #{{order_id}}
+📊 Order Status Updated!
 
-**Body:**
-```
-Dear Admin,
+Order Information:
+- Order ID: {{order_id}}
+- Customer: {{customer_name}}
+- Date: {{order_date}}
+- Total: {{total_amount}} EGP
 
-Order status has been updated:
+Status Change:
+- Previous: {{old_status}}
+- New: {{new_status}}
 
-Order ID: {{order_id}}
-Customer: {{customer_name}}
-Status Changed From: {{old_status}}
-Status Changed To: {{new_status}}
-Date: {{order_date}}
-
-Please check your admin panel for more details.
-
-Best regards,
-Wallz Poster Shop
-{{site_url}}
+© 2024 WallZ - Your Wall Art Store
 ```
 
-### قالب "ملخص يومي" (DAILY_SUMMARY):
-
-**Subject:** 📊 Daily Orders Summary - {{date}}
-
-**Body:**
-```
-Dear Admin,
-
-Daily Orders Summary for {{date}}:
-
-Total Orders: {{total_orders}}
-Total Revenue: {{total_revenue}} EGP
-Pending Orders: {{pending_orders}}
-Confirmed Orders: {{confirmed_orders}}
-
-Please check your admin panel for more details.
-
-Best regards,
-Wallz Poster Shop
-{{site_url}}
-```
-
-## الخطوة 4: الحصول على المفاتيح
-
-1. اذهب إلى **"Account"** في لوحة التحكم
-2. انسخ **Public Key** (مثل: `xxxxxxxxxxxxxxxx`)
-3. احفظ **Template IDs** لكل قالب
-
-## الخطوة 5: تحديث الإعدادات
-
-افتح ملف `src/config/emailConfig.js` وحدث القيم:
-
+#### **4. تحديث الإعدادات:**
+في ملف `src/config/emailConfig.js`:
 ```javascript
-export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_xxxxxxx', // ضع Service ID هنا
-  PUBLIC_KEY: 'xxxxxxxxxxxxxxxx', // ضع Public Key هنا
-  TEMPLATES: {
-    NEW_ORDER: 'template_xxxxxxx', // ضع Template ID للطلب الجديد
-    STATUS_UPDATE: 'template_xxxxxxx', // ضع Template ID لتحديث الحالة
-    DAILY_SUMMARY: 'template_xxxxxxx' // ضع Template ID للملخص اليومي
-  },
-  ADMIN_EMAIL: 'wallz.egy@gmail.com'
+export const emailConfig = {
+  serviceId: 'YOUR_ACTUAL_SERVICE_ID', // استبدل بالـ Service ID الحقيقي
+  publicKey: 'YOUR_ACTUAL_PUBLIC_KEY', // استبدل بالـ Public Key الحقيقي
+  // باقي الإعدادات...
 };
 ```
 
-## الخطوة 6: اختبار النظام
+### **🧪 كيفية الاختبار:**
 
-1. افتح Developer Tools (F12)
-2. اذهب إلى Console
-3. جرب عمل طلب جديد
-4. ستظهر رسائل مفصلة في Console
-5. إذا كان EmailJS مُعد بشكل صحيح، ستصل الإيميلات
+#### **1. اختبار إرسال الإيميل:**
+1. افتح Developer Console (F12)
+2. اكتب: `emailService.testEmail()`
+3. اضغط Enter
+4. **يجب أن تصل رسالة تجريبية على wallz.egy@gmail.com**
 
-## ملاحظات مهمة:
+#### **2. اختبار طلب جديد:**
+1. اذهب إلى صفحة السلة
+2. أضف منتجات للسلة
+3. املأ بيانات العميل
+4. اضغط "Place Order"
+5. **يجب أن تصل رسالة على wallz.egy@gmail.com**
 
-- **النسخة المجانية**: تسمح بـ 200 إيميل شهرياً
-- **التحديث التلقائي**: النظام يعمل حالياً مع Console fallback
-- **التشخيص**: جميع العمليات مسجلة في Console
-- **النسخ الاحتياطي**: localStorage يحفظ الطلبات كنسخة احتياطية
+#### **3. اختبار تحديث الحالة:**
+1. اذهب إلى لوحة الإدارة
+2. غيّر حالة طلب
+3. **يجب أن تصل رسالة تحديث على wallz.egy@gmail.com**
 
-## استكشاف الأخطاء:
+### **🎯 الميزات:**
 
-إذا لم تصل الإيميلات:
-1. تحقق من Console للأخطاء
-2. تأكد من صحة Service ID و Public Key
-3. تحقق من إعدادات Gmail
-4. تأكد من أن Template IDs صحيحة
+#### **1. رسائل حماسية:**
+- **🎉 NEW ORDER ALERT!** للطلبات الجديدة
+- **📊 Order Status Updated** لتحديث الحالة
+- **رسائل باللغة الإنجليزية** بشكل احترافي
 
-## الدعم:
+#### **2. معلومات شاملة:**
+- **تفاصيل الطلب** كاملة
+- **بيانات العميل** كاملة
+- **قائمة المنتجات** مع الأسعار
+- **المبلغ الإجمالي** والتفاصيل
 
-إذا واجهت مشاكل، تحقق من:
-- [EmailJS Documentation](https://www.emailjs.com/docs/)
-- [Gmail Setup Guide](https://www.emailjs.com/docs/setup/gmail/)
-- Console logs للتشخيص
+#### **3. آلية موثوقة:**
+- **إعادة المحاولة** عند الفشل (3 مرات)
+- **تأخير ذكي** بين المحاولات
+- **تسجيل مفصل** للأخطاء
+
+### **📧 مثال على الرسالة:**
+
+```
+🎉 NEW ORDER ALERT!
+
+A new order has just been placed on your WallZ store!
+
+Order Details:
+- Order ID: 1703123456789
+- Date: December 21, 2024 at 2:30 PM
+- Customer: Ahmed Mohamed
+- Phone: 01234567890
+- Address: 123 Main Street, Cairo
+- Total: 250 EGP
+- Items: 2 items
+
+Items List:
+- Wall Art Poster 1 (Qty: 1) - 150 EGP
+- Wall Art Poster 2 (Qty: 1) - 100 EGP
+
+Action Required: Process this order as soon as possible!
+
+© 2024 WallZ - Your Wall Art Store
+```
+
+### **🔧 استكشاف الأخطاء:**
+
+#### **إذا لم تصل الرسائل:**
+1. تأكد من صحة Service ID و Public Key
+2. تأكد من ربط Gmail بشكل صحيح
+3. تحقق من Console للأخطاء
+4. تأكد من تفعيل الإيميلات في Gmail
+
+#### **إذا فشل الإرسال:**
+1. تحقق من اتصال الإنترنت
+2. تأكد من صحة قوالب الإيميل
+3. تحقق من حدود EmailJS (100 إيميل/شهر مجاناً)
+
+## 🎉 النظام جاهز للاستخدام!
+
+**بعد إعداد EmailJS، ستحصل على إيميلات تلقائية حماسية عند كل طلب جديد!** 📧✨

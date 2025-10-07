@@ -35,12 +35,13 @@ function DeletedOrders() {
         
         // First try to load from Firebase
         const firebaseResult = await firebaseService.getDeletedOrders();
-        if (firebaseResult.success && firebaseResult.deletedOrders.length > 0) {
-          setDeletedOrders(firebaseResult.deletedOrders);
-          setFilteredOrders(firebaseResult.deletedOrders);
+        if (firebaseResult.success) {
+          const firebaseDeletedOrders = firebaseResult.deletedOrders || [];
+          setDeletedOrders(firebaseDeletedOrders);
+          setFilteredOrders(firebaseDeletedOrders);
           // Update localStorage with Firebase data
-          localStorage.setItem('deletedOrders', JSON.stringify(firebaseResult.deletedOrders));
-          console.log('📋 Loaded deleted orders from Firebase:', firebaseResult.deletedOrders.length);
+          localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
+          console.log('📋 Loaded deleted orders from Firebase:', firebaseDeletedOrders.length);
         } else {
           // Fallback to localStorage
           const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
@@ -91,8 +92,12 @@ function DeletedOrders() {
 
       // Update Firebase with new deleted orders list
       try {
-        await firebaseService.saveDeletedOrders(updatedDeleted);
-        console.log('✅ Deleted orders updated in Firebase');
+        const syncResult = await firebaseService.saveDeletedOrders(updatedDeleted);
+        if (syncResult.success) {
+          console.log('✅ Deleted orders updated in Firebase successfully');
+        } else {
+          console.error('❌ Failed to update Firebase:', syncResult.error);
+        }
       } catch (error) {
         console.error('❌ Failed to update Firebase:', error);
       }
@@ -121,8 +126,12 @@ function DeletedOrders() {
 
         // Update Firebase with new deleted orders list
         try {
-          await firebaseService.saveDeletedOrders(updatedDeleted);
-          console.log('✅ Deleted orders updated in Firebase');
+          const syncResult = await firebaseService.saveDeletedOrders(updatedDeleted);
+          if (syncResult.success) {
+            console.log('✅ Deleted orders updated in Firebase successfully');
+          } else {
+            console.error('❌ Failed to update Firebase:', syncResult.error);
+          }
         } catch (error) {
           console.error('❌ Failed to update Firebase:', error);
         }
@@ -146,8 +155,12 @@ function DeletedOrders() {
 
         // Update Firebase with empty deleted orders list
         try {
-          await firebaseService.saveDeletedOrders([]);
-          console.log('✅ Deleted orders cleared in Firebase');
+          const syncResult = await firebaseService.saveDeletedOrders([]);
+          if (syncResult.success) {
+            console.log('✅ Deleted orders cleared in Firebase successfully');
+          } else {
+            console.error('❌ Failed to update Firebase:', syncResult.error);
+          }
         } catch (error) {
           console.error('❌ Failed to update Firebase:', error);
         }

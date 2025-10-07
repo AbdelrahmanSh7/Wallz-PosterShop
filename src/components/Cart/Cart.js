@@ -3,6 +3,7 @@ import { FaShoppingCart } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { GOVERNORATES, getShippingCost } from '../../data/governorates';
 import firebaseService from '../../services/firebaseService';
+import emailService from '../../services/emailService';
 import simpleNotification from '../../utils/simpleNotification';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../CustomAlert/CustomAlert';
@@ -229,6 +230,19 @@ function Cart() {
       const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       existingOrders.push(order);
       localStorage.setItem('orders', JSON.stringify(existingOrders));
+      
+      // Send email notification to admin
+      try {
+        console.log('📧 Sending new order email notification...');
+        const emailResult = await emailService.sendNewOrderEmail(order);
+        if (emailResult.success) {
+          console.log('✅ New order email sent successfully');
+        } else {
+          console.error('❌ Failed to send email:', emailResult.error);
+        }
+      } catch (error) {
+        console.error('❌ Email sending error:', error);
+      }
       
       // Trigger new order notification
       simpleNotification.triggerNewOrderEvent(order);

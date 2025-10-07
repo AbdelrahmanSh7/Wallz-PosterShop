@@ -1,9 +1,9 @@
 import emailjs from '@emailjs/browser';
-import { EMAILJS_CONFIG } from '../config/emailConfig';
+import { emailConfig } from '../config/emailConfig';
 import { getGovernorateName } from '../data/governorates';
 
 // Initialize EmailJS
-emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+emailjs.init(emailConfig.publicKey);
 
 /**
  * Send new order notification email
@@ -17,7 +17,7 @@ export const sendNewOrderNotification = async (orderData) => {
     
     // Prepare email template parameters
     const templateParams = {
-      to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+      to_email: emailConfig.adminEmail,
       order_id: orderData.id,
       customer_name: orderData.customer?.fullName || orderData.customerData?.fullName || 'N/A',
       customer_phone: orderData.customer?.phone1 || orderData.customerData?.phone1 || 'N/A',
@@ -35,8 +35,8 @@ export const sendNewOrderNotification = async (orderData) => {
 
     // Send email
     const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATES.NEW_ORDER,
+      emailConfig.serviceId,
+      emailConfig.templates.newOrder,
       templateParams
     );
 
@@ -70,7 +70,7 @@ const formatItemsDetails = (items) => {
 export const sendStatusUpdateNotification = async (orderData, oldStatus, newStatus) => {
   try {
     const templateParams = {
-      to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+      to_email: emailConfig.adminEmail,
       order_id: orderData.id,
       customer_name: orderData.customer?.fullName || orderData.customerData?.fullName || 'N/A',
       old_status: oldStatus,
@@ -80,8 +80,8 @@ export const sendStatusUpdateNotification = async (orderData, oldStatus, newStat
     };
 
     const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATES.STATUS_UPDATE,
+      emailConfig.serviceId,
+      emailConfig.templates.statusUpdate,
       templateParams
     );
 
@@ -105,7 +105,7 @@ export const sendDailySummary = async (orders) => {
     );
 
     const templateParams = {
-      to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
+      to_email: emailConfig.adminEmail,
       date: today,
       total_orders: todayOrders.length,
       total_revenue: todayOrders.reduce((sum, order) => 
@@ -117,8 +117,8 @@ export const sendDailySummary = async (orders) => {
     };
 
     const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.TEMPLATES.DAILY_SUMMARY,
+      emailConfig.serviceId,
+      emailConfig.templates.dailySummary,
       templateParams
     );
 

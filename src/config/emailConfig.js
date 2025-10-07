@@ -1,22 +1,26 @@
-// EmailJS Configuration
-// You need to set up EmailJS account and get these values from your dashboard
+// EmailJS Configuration for WallZ
+// You need to set up EmailJS account and get these values
 
-export const EMAILJS_CONFIG = {
-  // Replace with your actual EmailJS service ID
-  SERVICE_ID: 'service_wallz_orders',
+export const emailConfig = {
+  // EmailJS Service Configuration
+  serviceId: 'service_wallz', // Replace with your actual EmailJS service ID
+  publicKey: 'YOUR_PUBLIC_KEY', // Replace with your actual EmailJS public key
   
-  // Replace with your actual EmailJS public key
-  PUBLIC_KEY: 'YOUR_EMAILJS_PUBLIC_KEY',
-  
-  // Email templates
-  TEMPLATES: {
-    NEW_ORDER: 'template_new_order',
-    STATUS_UPDATE: 'template_status_update',
-    DAILY_SUMMARY: 'template_daily_summary'
+  // Email Templates
+  templates: {
+    newOrder: 'template_new_order', // Template for new order notifications
+    statusUpdate: 'template_status_update' // Template for status updates
   },
   
-  // Admin email
-  ADMIN_EMAIL: 'wallz.egy@gmail.com'
+  // Admin Email
+  adminEmail: 'wallz.egy@gmail.com',
+  
+  // Email Settings
+  settings: {
+    autoSend: true, // Automatically send emails
+    retryAttempts: 3, // Number of retry attempts if email fails
+    retryDelay: 2000 // Delay between retry attempts (ms)
+  }
 };
 
 // Instructions for setting up EmailJS:
@@ -24,43 +28,12 @@ export const EMAILJS_CONFIG = {
 1. Go to https://www.emailjs.com/
 2. Create a free account
 3. Create a new service (Gmail, Outlook, etc.)
-4. Create email templates with the following variables:
-   
-   For NEW_ORDER template:
-   - {{to_email}}
-   - {{order_id}}
-   - {{customer_name}}
-   - {{customer_phone}}
-   - {{customer_governorate}}
-   - {{customer_address}}
-   - {{order_date}}
-   - {{order_status}}
-   - {{order_total}}
-   - {{order_subtotal}}
-   - {{order_shipping}}
-   - {{items_count}}
-   - {{items_details}}
-   - {{site_url}}
-   
-   For STATUS_UPDATE template:
-   - {{to_email}}
-   - {{order_id}}
-   - {{customer_name}}
-   - {{old_status}}
-   - {{new_status}}
-   - {{order_date}}
-   - {{site_url}}
-   
-   For DAILY_SUMMARY template:
-   - {{to_email}}
-   - {{date}}
-   - {{total_orders}}
-   - {{total_revenue}}
-   - {{pending_orders}}
-   - {{confirmed_orders}}
-   - {{site_url}}
-
-5. Get your Service ID and Public Key from the dashboard
-6. Replace the values above with your actual credentials
+4. Create email templates:
+   - template_new_order: For new order notifications
+   - template_status_update: For status update notifications
+5. Get your Service ID and Public Key
+6. Replace the values above with your actual values
 7. Test the email functionality
 */
+
+export default emailConfig;

@@ -17,6 +17,7 @@ import {
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import firebaseService from '../../services/firebaseService';
+import emailService from '../../services/emailService';
 import simpleNotification from '../../utils/simpleNotification';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../CustomAlert/CustomAlert';
@@ -109,11 +110,12 @@ function AdminOrders() {
           let deletedOrderIds = [];
           
           if (deletedOrdersResult.success) {
-            deletedOrderIds = deletedOrdersResult.deletedOrders.map(order => order.originalId || order.id);
+            const firebaseDeletedOrders = deletedOrdersResult.deletedOrders || [];
+            deletedOrderIds = firebaseDeletedOrders.map(order => order.originalId || order.id);
             // Update localStorage with Firebase data
-            localStorage.setItem('deletedOrders', JSON.stringify(deletedOrdersResult.deletedOrders));
-            setDeletedOrdersCount(deletedOrdersResult.deletedOrders.length);
-            console.log('✅ Deleted orders synced from Firebase:', deletedOrdersResult.deletedOrders.length);
+            localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
+            setDeletedOrdersCount(firebaseDeletedOrders.length);
+            console.log('✅ Deleted orders synced from Firebase:', firebaseDeletedOrders.length);
           } else {
             // Fallback to localStorage
             deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
@@ -321,6 +323,19 @@ function AdminOrders() {
       
       // Send status update notification
       if (order && oldStatus !== newStatus) {
+        // Send email notification
+        try {
+          const emailResult = await emailService.sendOrderStatusUpdateEmail(order, newStatus);
+          if (emailResult.success) {
+            console.log('✅ Status update email sent successfully');
+          } else {
+            console.error('❌ Failed to send status update email:', emailResult.error);
+          }
+        } catch (error) {
+          console.error('❌ Email sending error:', error);
+        }
+        
+        // Also send the old notification system
         sendStatusUpdateNotification(order, oldStatus, newStatus).then(result => {
           if (result.success) {
             console.log('Status update notification sent successfully');
@@ -378,10 +393,19 @@ function AdminOrders() {
             setDeletedOrdersCount(deletedOrders.length);
             console.log('🗑️ Order moved to deleted orders:', orderId);
             
+            // Force update the count immediately
+            setTimeout(() => {
+              setDeletedOrdersCount(prev => prev + 1);
+            }, 100);
+            
             // Save to Firebase for cross-device sync
             try {
-              await firebaseService.saveDeletedOrders(deletedOrders);
-              console.log('✅ Deleted orders synced to Firebase');
+              const syncResult = await firebaseService.saveDeletedOrders(deletedOrders);
+              if (syncResult.success) {
+                console.log('✅ Deleted orders synced to Firebase successfully');
+              } else {
+                console.error('❌ Failed to sync deleted orders to Firebase:', syncResult.error);
+              }
             } catch (error) {
               console.error('❌ Failed to sync deleted orders to Firebase:', error);
             }
@@ -547,10 +571,19 @@ function AdminOrders() {
         setDeletedOrdersCount(deletedOrders.length);
         console.log('🗑️ All orders moved to deleted orders:', allOrders.length);
         
+        // Force update the count immediately
+        setTimeout(() => {
+          setDeletedOrdersCount(deletedOrders.length);
+        }, 100);
+        
         // Save to Firebase for cross-device sync
         try {
-          await firebaseService.saveDeletedOrders(deletedOrders);
-          console.log('✅ All deleted orders synced to Firebase');
+          const syncResult = await firebaseService.saveDeletedOrders(deletedOrders);
+          if (syncResult.success) {
+            console.log('✅ All deleted orders synced to Firebase successfully');
+          } else {
+            console.error('❌ Failed to sync deleted orders to Firebase:', syncResult.error);
+          }
         } catch (error) {
           console.error('❌ Failed to sync deleted orders to Firebase:', error);
         }
