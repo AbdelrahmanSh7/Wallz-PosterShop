@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, writeBatch, getDoc, setDoc } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -360,6 +360,52 @@ class FirebaseService {
         error: error.message,
         deletedCount: 0
       };
+    }
+  }
+
+  // Save deleted orders to Firebase
+  async saveDeletedOrders(deletedOrders) {
+    try {
+      console.log('💾 Saving deleted orders to Firebase:', deletedOrders.length);
+      
+      const deletedOrdersRef = doc(db, 'system', 'deletedOrders');
+      await setDoc(deletedOrdersRef, {
+        deletedOrders: deletedOrders,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: 'admin'
+      });
+      
+      console.log('✅ Deleted orders saved to Firebase successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error saving deleted orders to Firebase:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get deleted orders from Firebase
+  async getDeletedOrders() {
+    try {
+      console.log('📋 Getting deleted orders from Firebase...');
+      
+      const deletedOrdersRef = doc(db, 'system', 'deletedOrders');
+      const docSnap = await getDoc(deletedOrdersRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('✅ Deleted orders loaded from Firebase:', data.deletedOrders?.length || 0);
+        return { 
+          success: true, 
+          deletedOrders: data.deletedOrders || [],
+          lastUpdated: data.lastUpdated
+        };
+      } else {
+        console.log('📭 No deleted orders found in Firebase');
+        return { success: true, deletedOrders: [] };
+      }
+    } catch (error) {
+      console.error('❌ Error getting deleted orders from Firebase:', error);
+      return { success: false, error: error.message };
     }
   }
 }

@@ -8,6 +8,7 @@ import {
   FaSearch,
   FaFilter
 } from 'react-icons/fa';
+import firebaseService from '../../services/firebaseService';
 import './AdminOrders.css';
 
 function DeletedOrders() {
@@ -26,18 +27,33 @@ function DeletedOrders() {
     }
   }, [navigate]);
 
-  // Load deleted orders from localStorage
+  // Load deleted orders from Firebase and localStorage
   useEffect(() => {
-    const loadDeletedOrders = () => {
+    const loadDeletedOrders = async () => {
       try {
+        setLoading(true);
+        
+        // First try to load from Firebase
+        const firebaseResult = await firebaseService.getDeletedOrders();
+        if (firebaseResult.success && firebaseResult.deletedOrders.length > 0) {
+          setDeletedOrders(firebaseResult.deletedOrders);
+          setFilteredOrders(firebaseResult.deletedOrders);
+          // Update localStorage with Firebase data
+          localStorage.setItem('deletedOrders', JSON.stringify(firebaseResult.deletedOrders));
+          console.log('📋 Loaded deleted orders from Firebase:', firebaseResult.deletedOrders.length);
+        } else {
+          // Fallback to localStorage
+          const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+          setDeletedOrders(deleted);
+          setFilteredOrders(deleted);
+          console.log('📋 Loaded deleted orders from localStorage:', deleted.length);
+        }
+      } catch (error) {
+        console.error('Error loading deleted orders:', error);
+        // Fallback to localStorage
         const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
         setDeletedOrders(deleted);
         setFilteredOrders(deleted);
-        console.log('📋 Loaded deleted orders:', deleted.length);
-      } catch (error) {
-        console.error('Error loading deleted orders:', error);
-        setDeletedOrders([]);
-        setFilteredOrders([]);
       } finally {
         setLoading(false);
       }
@@ -73,6 +89,14 @@ function DeletedOrders() {
       setFilteredOrders(updatedDeleted);
       localStorage.setItem('deletedOrders', JSON.stringify(updatedDeleted));
 
+      // Update Firebase with new deleted orders list
+      try {
+        await firebaseService.saveDeletedOrders(updatedDeleted);
+        console.log('✅ Deleted orders updated in Firebase');
+      } catch (error) {
+        console.error('❌ Failed to update Firebase:', error);
+      }
+
       // Add back to active orders
       const activeOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       activeOrders.push(orderToRestore);
@@ -87,13 +111,21 @@ function DeletedOrders() {
   };
 
   // Permanently delete order
-  const permanentDeleteOrder = (orderId) => {
+  const permanentDeleteOrder = async (orderId) => {
     if (window.confirm('هل أنت متأكد من الحذف النهائي لهذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.')) {
       try {
         const updatedDeleted = deletedOrders.filter(order => order.id !== orderId);
         setDeletedOrders(updatedDeleted);
         setFilteredOrders(updatedDeleted);
         localStorage.setItem('deletedOrders', JSON.stringify(updatedDeleted));
+
+        // Update Firebase with new deleted orders list
+        try {
+          await firebaseService.saveDeletedOrders(updatedDeleted);
+          console.log('✅ Deleted orders updated in Firebase');
+        } catch (error) {
+          console.error('❌ Failed to update Firebase:', error);
+        }
 
         console.log('🗑️ Order permanently deleted:', orderId);
         alert('تم حذف الطلب نهائياً!');
@@ -105,12 +137,21 @@ function DeletedOrders() {
   };
 
   // Clear all deleted orders
-  const clearAllDeleted = () => {
+  const clearAllDeleted = async () => {
     if (window.confirm('هل أنت متأكد من حذف جميع الطلبات المحذوفة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
       try {
         setDeletedOrders([]);
         setFilteredOrders([]);
         localStorage.removeItem('deletedOrders');
+
+        // Update Firebase with empty deleted orders list
+        try {
+          await firebaseService.saveDeletedOrders([]);
+          console.log('✅ Deleted orders cleared in Firebase');
+        } catch (error) {
+          console.error('❌ Failed to update Firebase:', error);
+        }
+
         console.log('🗑️ All deleted orders cleared');
         alert('تم حذف جميع الطلبات المحذوفة نهائياً!');
       } catch (error) {

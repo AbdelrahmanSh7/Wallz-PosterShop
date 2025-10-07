@@ -104,8 +104,22 @@ function AdminOrders() {
 
         const result = await firebaseService.getOrders();
         if (result.success) {
-          // Filter out any orders that might be in deleted orders
-          const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+          // Get deleted orders from Firebase for cross-device sync
+          const deletedOrdersResult = await firebaseService.getDeletedOrders();
+          let deletedOrderIds = [];
+          
+          if (deletedOrdersResult.success) {
+            deletedOrderIds = deletedOrdersResult.deletedOrders.map(order => order.originalId || order.id);
+            // Update localStorage with Firebase data
+            localStorage.setItem('deletedOrders', JSON.stringify(deletedOrdersResult.deletedOrders));
+            setDeletedOrdersCount(deletedOrdersResult.deletedOrders.length);
+            console.log('✅ Deleted orders synced from Firebase:', deletedOrdersResult.deletedOrders.length);
+          } else {
+            // Fallback to localStorage
+            deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+            console.log('⚠️ Using localStorage deleted orders as fallback');
+          }
+          
           const activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
           
           setOrders(activeOrders);
@@ -266,7 +280,7 @@ function AdminOrders() {
   useEffect(() => {
     let filtered = orders;
 
-    // First, filter out any deleted orders
+    // First, filter out any deleted orders (use current localStorage data)
     const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
     filtered = filtered.filter(order => !deletedOrderIds.includes(order.id));
 
@@ -363,6 +377,14 @@ function AdminOrders() {
             localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
             setDeletedOrdersCount(deletedOrders.length);
             console.log('🗑️ Order moved to deleted orders:', orderId);
+            
+            // Save to Firebase for cross-device sync
+            try {
+              await firebaseService.saveDeletedOrders(deletedOrders);
+              console.log('✅ Deleted orders synced to Firebase');
+            } catch (error) {
+              console.error('❌ Failed to sync deleted orders to Firebase:', error);
+            }
           }
           
           // Update local state immediately - remove from active orders
@@ -524,6 +546,14 @@ function AdminOrders() {
         localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
         setDeletedOrdersCount(deletedOrders.length);
         console.log('🗑️ All orders moved to deleted orders:', allOrders.length);
+        
+        // Save to Firebase for cross-device sync
+        try {
+          await firebaseService.saveDeletedOrders(deletedOrders);
+          console.log('✅ All deleted orders synced to Firebase');
+        } catch (error) {
+          console.error('❌ Failed to sync deleted orders to Firebase:', error);
+        }
         
         // Clear active orders completely
         localStorage.removeItem('orders');
