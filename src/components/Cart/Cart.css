@@ -426,3 +426,71 @@
     height: 80px;
   }
 }
+
+/* Phone Hint Styles - Gentle and Soft */
+.phone-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 400;
+  line-height: 1.4;
+  font-style: italic;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.phone-hint:hover {
+  opacity: 1;
+  color: #4b5563;
+}
+
+/* Enhanced Form Group for Phone Fields */
+.form-group:has(.phone-hint) {
+  margin-bottom: 20px;
+}
+
+.form-group:has(.phone-hint) input {
+  margin-bottom: 4px;
+}
+
+/* Soft Error Messages */
+.error-message {
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 6px;
+  display: block;
+  padding: 4px 8px;
+  background: #fef2f2;
+  border-radius: 6px;
+  border-left: 3px solid #dc2626;
+  animation: gentleShake 0.3s ease-in-out;
+}
+
+@keyframes gentleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Soft Input Focus */
+.form-group input:focus + .phone-hint {
+  color: #3b82f6;
+  opacity: 1;
+}
+
+/* Gentle Label Styling */
+.form-group label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.form-group input:focus + .phone-hint + label,
+.form-group:focus-within label {
+  color: #3b82f6;
+}

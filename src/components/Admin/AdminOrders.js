@@ -24,6 +24,7 @@ import { testFirebaseConnection } from '../../utils/firebaseTest';
 import { useLoadingContext } from '../Loading/LoadingProvider';
 import Loading from '../Loading/Loading';
 import Notification from '../Notification/Notification';
+import PasswordDialog from '../PasswordDialog/PasswordDialog';
 import './AdminOrders.css';
 
 function AdminOrders() {
@@ -40,6 +41,7 @@ function AdminOrders() {
   const [newOrders, setNewOrders] = useState(new Set());
   const [showNotification, setShowNotification] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -382,6 +384,84 @@ function AdminOrders() {
     }
   };
 
+  // WallZ Secret: Delete all orders with password protection
+  const deleteAllOrders = () => {
+    console.log('🗑️ WallZ Secret: Delete all orders requested');
+    setShowPasswordDialog(true);
+  };
+
+  // Handle password confirmation
+  const handlePasswordConfirm = async (password) => {
+    setShowPasswordDialog(false);
+    
+    if (password !== 'WallZ') {
+      await showAlert('❌ كلمة السر غير صحيحة!\n\nالوصول مرفوض.', 'error');
+      console.log('❌ WallZ Secret: Wrong password entered');
+      return;
+    }
+    
+    console.log('✅ WallZ Secret: Correct password entered');
+    
+    // Show confirmation dialog
+    const confirmed = await showAlert(
+      `🔐 تم التحقق من كلمة السر بنجاح!\n\nهل أنت متأكد من حذف جميع الطلبات نهائياً؟\n\nسيتم حذف ${orders.length} طلب من Firebase و localStorage.\n\nهذا الإجراء لا يمكن التراجع عنه!`,
+      'delete'
+    );
+    
+    if (!confirmed) {
+      console.log('❌ WallZ Secret: Delete cancelled by user');
+      return;
+    }
+
+    try {
+      startComponentLoading('deleteAll', 'Deleting all orders...');
+      
+      // Try batch deletion first
+      let firebaseResult = await firebaseService.deleteAllOrders();
+      
+      // If batch deletion fails, try force deletion
+      if (!firebaseResult.success || firebaseResult.deletedCount === 0) {
+        console.log('🔄 Batch deletion failed, trying force deletion...');
+        firebaseResult = await firebaseService.forceDeleteAllOrders();
+      }
+      
+      if (firebaseResult.success && firebaseResult.deletedCount > 0) {
+        console.log('✅ Delete All Orders: Firebase deletion successful');
+        
+        // Clear localStorage
+        localStorage.removeItem('orders');
+        console.log('✅ Delete All Orders: localStorage cleared');
+        
+        // Update state
+        setOrders([]);
+        setFilteredOrders([]);
+        setNewOrders(new Set());
+        
+        // Show success message
+        await showAlert(
+          `🎉 تم حذف جميع الطلبات بنجاح!\n\nتم حذف ${firebaseResult.deletedCount} طلب من Firebase\nتم مسح localStorage\n\nتم تنفيذ "Delete All Orders" بنجاح!`,
+          'success'
+        );
+        
+        console.log('🎉 Delete All Orders: All orders deleted successfully!');
+      } else {
+        console.error('❌ Delete All Orders: Firebase deletion failed:', firebaseResult.error);
+        await showAlert('فشل في حذف الطلبات من Firebase: ' + (firebaseResult.error || 'Unknown error'), 'error');
+      }
+    } catch (error) {
+      console.error('❌ Delete All Orders: Error deleting all orders:', error);
+      await showAlert('خطأ في حذف جميع الطلبات: ' + error.message, 'error');
+    } finally {
+      stopComponentLoading('deleteAll');
+    }
+  };
+
+  // Handle password dialog cancel
+  const handlePasswordCancel = () => {
+    setShowPasswordDialog(false);
+    console.log('❌ WallZ Secret: Password dialog cancelled by user');
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -615,6 +695,23 @@ function AdminOrders() {
           🧪
           Test Delete
         </button>
+        <button 
+          onClick={deleteAllOrders} 
+          className="delete-all-orders-btn"
+          disabled={isComponentLoading('deleteAll')}
+        >
+          {isComponentLoading('deleteAll') ? (
+            <>
+              <Loading size="small" color="light" showText={false} />
+              <span style={{ marginLeft: '8px' }}>Deleting...</span>
+            </>
+          ) : (
+            <>
+              🗑️
+              Delete All Orders
+            </>
+          )}
+        </button>
         <button onClick={exportToExcel} className="export-excel-btn">
           <FaFileExcel />
           Export to Excel
@@ -840,6 +937,16 @@ function AdminOrders() {
         show={showNotification}
         count={notificationCount}
         onClose={hideNotification}
+      />
+
+      {/* Password Dialog */}
+      <PasswordDialog
+        show={showPasswordDialog}
+        onConfirm={handlePasswordConfirm}
+        onCancel={handlePasswordCancel}
+        title="Delete All Orders"
+        message="أدخل كلمة السر للوصول لوظيفة حذف جميع الطلبات نهائياً"
+        correctPassword="WallZ"
       />
     </div>
   );

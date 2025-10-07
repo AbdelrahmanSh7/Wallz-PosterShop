@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, writeBatch } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -49,6 +49,11 @@ class FirebaseService {
         error: error.message
       };
     }
+  }
+
+  // Add order to Firebase (alias for saveOrder)
+  async addOrder(orderData) {
+    return await this.saveOrder(orderData);
   }
 
   // Get all orders from Firebase
@@ -235,6 +240,125 @@ class FirebaseService {
       return {
         success: false,
         error: error.message
+      };
+    }
+  }
+
+  // Delete all orders (Secret WallZ function) - Enhanced version
+  async deleteAllOrders() {
+    try {
+      console.log('🗑️ Delete All Orders: Starting deletion process...');
+      
+      // Get all orders first
+      const ordersResult = await this.getOrders();
+      if (!ordersResult.success || ordersResult.orders.length === 0) {
+        console.log('📊 No orders to delete');
+        return {
+          success: true,
+          message: 'No orders found to delete',
+          deletedCount: 0
+        };
+      }
+
+      const orders = ordersResult.orders;
+      console.log(`📊 Found ${orders.length} orders to delete`);
+
+      // Use batch operations for better performance and reliability
+      const batch = writeBatch(this.db);
+      let batchCount = 0;
+      const maxBatchSize = 500; // Firestore batch limit
+      
+      // Add delete operations to batch
+      for (const order of orders) {
+        const orderRef = doc(this.db, this.ordersCollection, order.id);
+        batch.delete(orderRef);
+        batchCount++;
+        
+        // Commit batch if it reaches the limit
+        if (batchCount >= maxBatchSize) {
+          await batch.commit();
+          console.log(`✅ Batch committed: ${batchCount} orders deleted`);
+          batchCount = 0;
+        }
+      }
+      
+      // Commit remaining operations
+      if (batchCount > 0) {
+        await batch.commit();
+        console.log(`✅ Final batch committed: ${batchCount} orders deleted`);
+      }
+
+      console.log(`✅ Delete All Orders: Successfully deleted ${orders.length} orders`);
+      
+      return {
+        success: true,
+        message: `Successfully deleted ${orders.length} orders`,
+        deletedCount: orders.length,
+        failedCount: 0
+      };
+    } catch (error) {
+      console.error('❌ Delete All Orders: Error deleting all orders:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      return {
+        success: false,
+        error: error.message,
+        deletedCount: 0
+      };
+    }
+  }
+
+  // Alternative delete method - Force delete all orders
+  async forceDeleteAllOrders() {
+    try {
+      console.log('🗑️ Force Delete: Starting force deletion...');
+      
+      // Get all orders
+      const ordersResult = await this.getOrders();
+      if (!ordersResult.success || ordersResult.orders.length === 0) {
+        return {
+          success: true,
+          message: 'No orders found to delete',
+          deletedCount: 0
+        };
+      }
+
+      const orders = ordersResult.orders;
+      console.log(`📊 Force Delete: Found ${orders.length} orders to delete`);
+
+      // Try individual deletion with retry mechanism
+      let deletedCount = 0;
+      let failedCount = 0;
+
+      for (const order of orders) {
+        try {
+          const orderRef = doc(this.db, this.ordersCollection, order.id);
+          await deleteDoc(orderRef);
+          deletedCount++;
+          console.log(`✅ Force Delete: Order ${order.id} deleted`);
+        } catch (error) {
+          failedCount++;
+          console.error(`❌ Force Delete: Failed to delete order ${order.id}:`, error);
+        }
+      }
+
+      console.log(`✅ Force Delete: Deleted ${deletedCount} orders, failed ${failedCount}`);
+      
+      return {
+        success: deletedCount > 0,
+        message: `Force deleted ${deletedCount} orders, failed ${failedCount}`,
+        deletedCount: deletedCount,
+        failedCount: failedCount
+      };
+    } catch (error) {
+      console.error('❌ Force Delete: Error in force deletion:', error);
+      return {
+        success: false,
+        error: error.message,
+        deletedCount: 0
       };
     }
   }

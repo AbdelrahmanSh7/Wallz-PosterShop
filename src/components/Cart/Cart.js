@@ -38,7 +38,11 @@ function Cart() {
     const errors = {};
     
     if (!customerData.fullName.trim()) {
-      errors.fullName = 'الاسم مطلوب';
+      errors.fullName = 'الاسم الأول مطلوب';
+    }
+    
+    if (!customerData.lastName.trim()) {
+      errors.lastName = 'الاسم الأخير مطلوب';
     }
     
     if (customerData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
@@ -53,16 +57,24 @@ function Cart() {
       errors.address = 'العنوان مطلوب';
     }
     
+    // Phone 1 validation - must start with 01 and be 11 digits
     if (!customerData.phone1.trim()) {
       errors.phone1 = 'رقم التلفون الأول مطلوب';
-    } else if (!/^[0-9]+$/.test(customerData.phone1.replace(/\s/g, ''))) {
-      errors.phone1 = 'رقم التلفون يجب أن يحتوي على أرقام فقط';
+    } else {
+      const cleanPhone1 = customerData.phone1.replace(/\s/g, '');
+      if (!/^01[0-9]{9}$/.test(cleanPhone1)) {
+        errors.phone1 = 'رقم التلفون الأول يجب أن يبدأ بـ 01 ويحتوي على 11 رقم';
+      }
     }
     
+    // Phone 2 validation - must start with 01 and be 11 digits
     if (!customerData.phone2.trim()) {
       errors.phone2 = 'رقم التلفون الثاني مطلوب';
-    } else if (!/^[0-9]+$/.test(customerData.phone2.replace(/\s/g, ''))) {
-      errors.phone2 = 'رقم التلفون يجب أن يحتوي على أرقام فقط';
+    } else {
+      const cleanPhone2 = customerData.phone2.replace(/\s/g, '');
+      if (!/^01[0-9]{9}$/.test(cleanPhone2)) {
+        errors.phone2 = 'رقم التلفون الثاني يجب أن يبدأ بـ 01 ويحتوي على 11 رقم';
+      }
     }
     
     setFormErrors(errors);
@@ -184,8 +196,8 @@ function Cart() {
 
   // Validate customer data
   const validateCustomerData = () => {
-    const { fullName, governorate, address, phone1, phone2 } = customerData;
-    return fullName.trim() && governorate.trim() && address.trim() && phone1.trim() && phone2.trim();
+    const { fullName, lastName, governorate, address, phone1, phone2 } = customerData;
+    return fullName.trim() && lastName.trim() && governorate.trim() && address.trim() && phone1.trim() && phone2.trim();
   };
 
   // Save order to localStorage
@@ -311,7 +323,7 @@ function Cart() {
             <div className="billing-form">
               <div className="form-row">
                 <div className="form-group">
-                  <label>First Name</label>
+                  <label>First Name *</label>
                   <input
                     type="text"
                     name="fullName"
@@ -325,13 +337,14 @@ function Cart() {
                 </div>
                 
                 <div className="form-group">
-                  <label>Last Name</label>
+                  <label>Last Name *</label>
                   <input
                     type="text"
                     name="lastName"
                     value={customerData.lastName || ''}
                     onChange={handleCustomerDataChange}
                     placeholder="Enter your last name"
+                    required
                     className={formErrors.lastName ? 'error' : ''}
                   />
                   {formErrors.lastName && <span className="error-message">{formErrors.lastName}</span>}
@@ -339,41 +352,45 @@ function Cart() {
               </div>
               
               <div className="form-group">
-                <label>Phone Number 1</label>
+                <label>Phone Number 1 *</label>
                 <input
                   type="tel"
                   name="phone1"
                   value={customerData.phone1}
                   onChange={handleCustomerDataChange}
-                  placeholder="Enter your first phone number"
+                  placeholder="01xxxxxxxxx"
                   required
+                  maxLength="11"
                   className={formErrors.phone1 ? 'error' : ''}
                 />
+                <small className="phone-hint">Please enter your phone number starting with 01 (11 digits total)</small>
                 {formErrors.phone1 && <span className="error-message">{formErrors.phone1}</span>}
               </div>
               
               <div className="form-group">
-                <label>Phone Number 2</label>
+                <label>Phone Number 2 *</label>
                 <input
                   type="tel"
                   name="phone2"
                   value={customerData.phone2}
                   onChange={handleCustomerDataChange}
-                  placeholder="Enter your second phone number"
+                  placeholder="01xxxxxxxxx"
                   required
+                  maxLength="11"
                   className={formErrors.phone2 ? 'error' : ''}
                 />
+                <small className="phone-hint">Please enter your phone number starting with 01 (11 digits total)</small>
                 {formErrors.phone2 && <span className="error-message">{formErrors.phone2}</span>}
               </div>
               
               <div className="form-group">
-                <label>Address</label>
+                <label>Address *</label>
                 <input
                   type="text"
                   name="address"
                   value={customerData.address}
                   onChange={handleCustomerDataChange}
-                  placeholder="Enter your address"
+                  placeholder="Enter your full address"
                   required
                   className={formErrors.address ? 'error' : ''}
                 />
@@ -381,7 +398,7 @@ function Cart() {
               </div>
               
               <div className="form-group">
-                <label>Governorate</label>
+                <label>Governorate *</label>
                 <select
                   name="governorate"
                   value={customerData.governorate}

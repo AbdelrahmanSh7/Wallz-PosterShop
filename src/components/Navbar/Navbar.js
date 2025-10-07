@@ -3,12 +3,15 @@ import { useNavigate, Link } from 'react-router-dom'
 import './Navbar.css'
 import { FiShoppingCart, FiUser, FiSearch, FiX } from 'react-icons/fi'
 import AdminLogin from '../Admin/AdminLogin'
+import useNotification from '../../hooks/useNotification'
+import NotificationContainer from '../Notification/NotificationContainer'
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const { notifications, showSuccess, removeNotification } = useNotification();
 
   // Load cart count and admin status from localStorage
   useEffect(() => {
@@ -93,6 +96,11 @@ const Navbar = () => {
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
     setIsAdminLoggedIn(true);
+    
+    // Show welcome notification
+    setTimeout(() => {
+      showSuccess('Welcome! You have successfully signed in as Admin.');
+    }, 100);
   };
 
   return (
@@ -146,6 +154,12 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
+      {/* Notifications */}
+      <NotificationContainer 
+        notifications={notifications} 
+        onRemove={removeNotification} 
+      />
     </>
   )
 }
