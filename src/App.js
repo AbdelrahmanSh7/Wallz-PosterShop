@@ -9,6 +9,7 @@ import Shop from './components/Shop';
 import Cart from './components/Cart/Cart';
 import Footer from './components/Footer/Footer';
 import AdminOrders from './components/Admin/AdminOrders';
+import DeletedOrders from './components/Admin/DeletedOrders';
 import OrderConfirmation from './components/OrderConfirmation/OrderConfirmation';
 import { LoadingProvider } from './components/Loading/LoadingProvider';
 import PageTransition from './components/PageTransition/PageTransition';
@@ -33,6 +34,7 @@ function AppContent() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/deleted-orders" element={<DeletedOrders />} />
       </Routes>
       {!isAdminPage && <Footer />}
     </PageTransition>

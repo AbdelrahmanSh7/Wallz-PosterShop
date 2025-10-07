@@ -42,6 +42,7 @@ function AdminOrders() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -51,6 +52,33 @@ function AdminOrders() {
       return;
     }
   }, [navigate]);
+
+  // Update deleted orders count
+  useEffect(() => {
+    const updateDeletedCount = () => {
+      const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+      setDeletedOrdersCount(deleted.length);
+    };
+    
+    updateDeletedCount();
+    
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      updateDeletedCount();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Helper function to clean deleted orders from localStorage
+  const cleanDeletedOrdersFromStorage = () => {
+    const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+    const currentOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    const activeOrders = currentOrders.filter(order => !deletedOrderIds.includes(order.id));
+    localStorage.setItem('orders', JSON.stringify(activeOrders));
+    console.log('🧹 Cleaned deleted orders from localStorage');
+  };
 
   // Hide notification when admin panel is opened
   useEffect(() => {
@@ -76,14 +104,18 @@ function AdminOrders() {
 
         const result = await firebaseService.getOrders();
         if (result.success) {
-          setOrders(result.orders);
-          setFilteredOrders(result.orders);
-          console.log('✅ Orders loaded from Firebase:', result.orders.length);
+          // Filter out any orders that might be in deleted orders
+          const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+          const activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          
+          setOrders(activeOrders);
+          setFilteredOrders(activeOrders);
+          console.log('✅ Orders loaded from Firebase:', activeOrders.length, '(filtered out deleted orders)');
           
           // Mark new orders (created in last 24 hours)
           const now = new Date();
           const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          const newOrderIds = result.orders
+          const newOrderIds = activeOrders
             .filter(order => new Date(order.date) > oneDayAgo)
             .map(order => order.id);
           setNewOrders(new Set(newOrderIds));
@@ -98,13 +130,17 @@ function AdminOrders() {
           console.error('❌ Failed to load orders from Firebase:', result.error);
           // Fallback to localStorage
           const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-          setOrders(savedOrders);
-          setFilteredOrders(savedOrders);
+          // Filter out deleted orders from localStorage too
+          const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+          const activeOrders = savedOrders.filter(order => !deletedOrderIds.includes(order.id));
+          
+          setOrders(activeOrders);
+          setFilteredOrders(activeOrders);
           
           // Check for new orders in localStorage
           const now = new Date();
           const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          const newOrderIds = savedOrders
+          const newOrderIds = activeOrders
             .filter(order => new Date(order.date) > oneDayAgo)
             .map(order => order.id);
           setNewOrders(new Set(newOrderIds));
@@ -230,6 +266,10 @@ function AdminOrders() {
   useEffect(() => {
     let filtered = orders;
 
+    // First, filter out any deleted orders
+    const deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
+    filtered = filtered.filter(order => !deletedOrderIds.includes(order.id));
+
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(order => 
@@ -307,16 +347,45 @@ function AdminOrders() {
         if (firebaseResult.success) {
           console.log(`✅ Order ${orderId} deleted from Firebase successfully`);
           
-          // Update local state immediately
+          // Find the order to move to deleted
+          const orderToDelete = orders.find(order => order.id === orderId);
+          
+          // Add to deleted orders FIRST
+          if (orderToDelete) {
+            const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+            const orderWithDeleteInfo = {
+              ...orderToDelete,
+              deletedAt: new Date().toISOString(),
+              deletedBy: 'admin',
+              originalId: orderId // Keep original ID for reference
+            };
+            deletedOrders.push(orderWithDeleteInfo);
+            localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
+            setDeletedOrdersCount(deletedOrders.length);
+            console.log('🗑️ Order moved to deleted orders:', orderId);
+          }
+          
+          // Update local state immediately - remove from active orders
           const updatedOrders = orders.filter(order => order.id !== orderId);
           console.log('📊 Updated orders count after delete:', updatedOrders.length);
           
+          // Force immediate UI update
           setOrders(updatedOrders);
           setFilteredOrders(updatedOrders);
           
-          // Also update localStorage as backup
+          // Update localStorage - remove from active orders
           localStorage.setItem('orders', JSON.stringify(updatedOrders));
-          console.log('💾 Updated localStorage with new orders');
+          console.log('💾 Updated localStorage - removed from active orders');
+          
+          // Clean any remaining deleted orders from localStorage
+          cleanDeletedOrdersFromStorage();
+          
+          // Force re-render to ensure UI updates
+          setTimeout(() => {
+            console.log('🔄 Forcing UI update after delete');
+            setOrders(prev => [...prev]);
+            setFilteredOrders(prev => [...prev]);
+          }, 50);
           
           // Remove from new orders set if it was there
           setNewOrders(prev => {
@@ -325,8 +394,16 @@ function AdminOrders() {
             return updated;
           });
           
-          await showAlert('تم حذف الطلب نهائياً من النظام', 'success');
-          console.log('✅ Delete operation completed successfully');
+          // Force a small delay to ensure state update
+          setTimeout(() => {
+            console.log('🔄 Final state check - orders count:', orders.length - 1);
+          }, 100);
+          
+          await showAlert(
+            'تم حذف الطلب وانتقاله لصفحة الحذوفات\n\nيمكنك الذهاب لصفحة الحذوفات لاستعادته',
+            'success'
+          );
+          console.log('✅ Delete operation completed successfully - order moved to deleted');
         } else {
           console.error('❌ Failed to delete order from Firebase:', firebaseResult.error);
           await showAlert(`حدث خطأ في حذف الطلب من Firebase: ${firebaseResult.error}`, 'error');
@@ -428,22 +505,48 @@ function AdminOrders() {
       if (firebaseResult.success && firebaseResult.deletedCount > 0) {
         console.log('✅ Delete All Orders: Firebase deletion successful');
         
-        // Clear localStorage
-        localStorage.removeItem('orders');
-        console.log('✅ Delete All Orders: localStorage cleared');
+        // Move all orders to deleted orders instead of permanent deletion
+        const allOrders = [...orders]; // Copy current orders
+        const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
         
-        // Update state
+        // Add all orders to deleted orders with delete info
+        allOrders.forEach(order => {
+          const orderWithDeleteInfo = {
+            ...order,
+            deletedAt: new Date().toISOString(),
+            deletedBy: 'admin',
+            originalId: order.id
+          };
+          deletedOrders.push(orderWithDeleteInfo);
+        });
+        
+        // Save to deleted orders
+        localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
+        setDeletedOrdersCount(deletedOrders.length);
+        console.log('🗑️ All orders moved to deleted orders:', allOrders.length);
+        
+        // Clear active orders completely
+        localStorage.removeItem('orders');
         setOrders([]);
         setFilteredOrders([]);
         setNewOrders(new Set());
         
+        // Force immediate UI update
+        setTimeout(() => {
+          console.log('🔄 Forcing complete UI clear after delete all');
+          setOrders([]);
+          setFilteredOrders([]);
+        }, 50);
+        
+        console.log('✅ Delete All Orders: All orders moved to deleted');
+        
         // Show success message
         await showAlert(
-          `🎉 تم حذف جميع الطلبات بنجاح!\n\nتم حذف ${firebaseResult.deletedCount} طلب من Firebase\nتم مسح localStorage\n\nتم تنفيذ "Delete All Orders" بنجاح!`,
+          `🎉 تم حذف جميع الطلبات وانتقالها لصفحة الحذوفات!\n\nتم نقل ${firebaseResult.deletedCount} طلب لصفحة الحذوفات\nيمكنك استعادتها من هناك\n\nتم تنفيذ "Delete All Orders" بنجاح!`,
           'success'
         );
         
-        console.log('🎉 Delete All Orders: All orders deleted successfully!');
+        console.log('🎉 Delete All Orders: All orders moved to deleted successfully!');
       } else {
         console.error('❌ Delete All Orders: Firebase deletion failed:', firebaseResult.error);
         await showAlert('فشل في حذف الطلبات من Firebase: ' + (firebaseResult.error || 'Unknown error'), 'error');
@@ -716,11 +819,15 @@ function AdminOrders() {
           <FaFileExcel />
           Export to Excel
         </button>
+        <Link to="/admin/deleted-orders" className="deleted-orders-btn">
+          <FaTrash />
+          Deleted Orders ({deletedOrdersCount})
+        </Link>
       </div>
 
       {/* Orders List */}
       <div className="orders-list">
-        {filteredOrders.length === 0 ? (
+        {!filteredOrders || filteredOrders.length === 0 ? (
           <div className="no-orders">
             <FaShoppingCart />
             <h3>No Orders Found</h3>
