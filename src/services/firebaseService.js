@@ -125,19 +125,71 @@ class FirebaseService {
     try {
       console.log(`🔄 Updating order ${orderId} status to: ${newStatus}`);
       
+      // Try to find order by ID first
       const orderRef = doc(this.db, this.ordersCollection, orderId);
-      await updateDoc(orderRef, {
-        status: newStatus,
-        updatedAt: new Date()
+      
+      try {
+        const orderSnap = await getDoc(orderRef);
+        
+        if (orderSnap.exists()) {
+          // Order found by direct ID, update it
+          await updateDoc(orderRef, {
+            status: newStatus,
+            updatedAt: new Date()
+          });
+          
+          console.log(`✅ Order ${orderId} status updated to ${newStatus}`);
+          
+          return {
+            success: true,
+            id: orderId,
+            status: newStatus
+          };
+        } else {
+          console.log(`⚠️ Order ${orderId} not found by direct ID, trying to find by field...`);
+        }
+      } catch (docError) {
+        console.log(`⚠️ Error accessing order by ID: ${docError.message}`);
+      }
+      
+      // If not found by direct ID, try to find by searching all orders
+      console.log('🔍 Searching for order in all documents...');
+      const ordersSnapshot = await getDocs(collection(this.db, this.ordersCollection));
+      
+      let foundOrder = null;
+      let foundDocId = null;
+      
+      ordersSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.id === orderId || doc.id === orderId) {
+          foundOrder = data;
+          foundDocId = doc.id;
+        }
       });
       
-      console.log(`✅ Order ${orderId} status updated to ${newStatus}`);
+      if (foundOrder && foundDocId) {
+        // Update the found order
+        const foundOrderRef = doc(this.db, this.ordersCollection, foundDocId);
+        await updateDoc(foundOrderRef, {
+          status: newStatus,
+          updatedAt: new Date()
+        });
+        
+        console.log(`✅ Order found and updated: ${foundDocId} -> ${newStatus}`);
+        
+        return {
+          success: true,
+          id: foundDocId,
+          status: newStatus
+        };
+      } else {
+        console.error(`❌ Order ${orderId} not found in any document`);
+        return {
+          success: false,
+          error: 'Order not found in Firebase database'
+        };
+      }
       
-      return {
-        success: true,
-        id: orderId,
-        status: newStatus
-      };
     } catch (error) {
       console.error('❌ Error updating order status:', error);
       return {

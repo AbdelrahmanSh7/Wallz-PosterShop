@@ -115,64 +115,7 @@ function DeletedOrders() {
     }
   };
 
-  // Permanently delete order
-  const permanentDeleteOrder = async (orderId) => {
-    if (window.confirm('هل أنت متأكد من الحذف النهائي لهذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.')) {
-      try {
-        const updatedDeleted = deletedOrders.filter(order => order.id !== orderId);
-        setDeletedOrders(updatedDeleted);
-        setFilteredOrders(updatedDeleted);
-        localStorage.setItem('deletedOrders', JSON.stringify(updatedDeleted));
 
-        // Update Firebase with new deleted orders list
-        try {
-          const syncResult = await firebaseService.saveDeletedOrders(updatedDeleted);
-          if (syncResult.success) {
-            console.log('✅ Deleted orders updated in Firebase successfully');
-          } else {
-            console.error('❌ Failed to update Firebase:', syncResult.error);
-          }
-        } catch (error) {
-          console.error('❌ Failed to update Firebase:', error);
-        }
-
-        console.log('🗑️ Order permanently deleted:', orderId);
-        alert('تم حذف الطلب نهائياً!');
-      } catch (error) {
-        console.error('Error permanently deleting order:', error);
-        alert('حدث خطأ في الحذف النهائي');
-      }
-    }
-  };
-
-  // Clear all deleted orders
-  const clearAllDeleted = async () => {
-    if (window.confirm('هل أنت متأكد من حذف جميع الطلبات المحذوفة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
-      try {
-        setDeletedOrders([]);
-        setFilteredOrders([]);
-        localStorage.removeItem('deletedOrders');
-
-        // Update Firebase with empty deleted orders list
-        try {
-          const syncResult = await firebaseService.saveDeletedOrders([]);
-          if (syncResult.success) {
-            console.log('✅ Deleted orders cleared in Firebase successfully');
-          } else {
-            console.error('❌ Failed to update Firebase:', syncResult.error);
-          }
-        } catch (error) {
-          console.error('❌ Failed to update Firebase:', error);
-        }
-
-        console.log('🗑️ All deleted orders cleared');
-        alert('تم حذف جميع الطلبات المحذوفة نهائياً!');
-      } catch (error) {
-        console.error('Error clearing deleted orders:', error);
-        alert('حدث خطأ في حذف الطلبات المحذوفة');
-      }
-    }
-  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -232,14 +175,6 @@ function DeletedOrders() {
           />
         </div>
         
-        <button 
-          onClick={clearAllDeleted}
-          className="delete-all-orders-btn"
-          disabled={deletedOrders.length === 0}
-        >
-          <FaTrash />
-          Clear All Deleted
-        </button>
       </div>
 
       {/* Orders List */}
@@ -296,13 +231,6 @@ function DeletedOrders() {
                 >
                   <FaUndo />
                   Restore
-                </button>
-                <button 
-                  onClick={() => permanentDeleteOrder(order.id)}
-                  className="permanent-delete-btn"
-                >
-                  <FaTrash />
-                  Delete Forever
                 </button>
               </div>
             </div>

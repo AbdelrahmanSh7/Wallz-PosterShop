@@ -160,6 +160,19 @@ function Cart() {
 
 
 
+  // Remove single item from cart
+  const removeFromCart = (itemId) => {
+    const updatedCartItems = cartItems.filter(item => item.id !== itemId);
+    setCartItems(updatedCartItems);
+    localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+    
+    // Trigger cart update event
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+    
+    // Show confirmation message
+    showCustomAlert('تم حذف العنصر من السلة', 'success');
+  };
+
   // Clear entire cart
   const clearCart = () => {
     setCartItems([]);
@@ -506,6 +519,13 @@ function Cart() {
                   <p className="product-details">Size: {item.size} | Qty: {item.quantity}</p>
                   <div className="product-price">{item.price * item.quantity} EGP</div>
                 </div>
+                <button 
+                  className="remove-item-btn"
+                  onClick={() => removeFromCart(item.id)}
+                  title="Remove from cart"
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>

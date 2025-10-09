@@ -1,4 +1,136 @@
-.App {
-  text-align: center;
-  margin-top: 50px; /* Space for fixed banner + navbar */
-} 
+/* Update Banner Styles */
+.update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  padding: 12px 20px;
+  z-index: 9999;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+.update-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 15px;
+}
+
+.update-content span {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.update-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.update-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.update-btn:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .update-banner {
+    padding: 10px 15px;
+  }
+  
+  .update-content {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .update-content span {
+    font-size: 0.8rem;
+  }
+  
+  .update-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .update-banner {
+    padding: 8px 12px;
+  }
+  
+  .update-content {
+    gap: 8px;
+  }
+  
+  .update-content span {
+    font-size: 0.75rem;
+  }
+  
+  .update-btn {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .update-banner {
+    background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .update-banner {
+    border-bottom: 2px solid white;
+  }
+  
+  .update-btn {
+    border: 2px solid white;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .update-banner {
+    animation: none;
+  }
+  
+  .update-btn:hover {
+    transform: none;
+  }
+  
+  .update-btn:active {
+    transform: none;
+  }
+}

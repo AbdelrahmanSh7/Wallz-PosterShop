@@ -224,6 +224,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  position: relative;
 }
 
 .product-image {
@@ -425,6 +426,14 @@
     width: 80px;
     height: 80px;
   }
+  
+  .remove-item-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
 }
 
 /* Phone Hint Styles - Gentle and Soft */
@@ -443,6 +452,36 @@
 .phone-hint:hover {
   opacity: 1;
   color: #4b5563;
+}
+
+/* Remove Item Button */
+.remove-item-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.remove-item-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.remove-item-btn:active {
+  transform: scale(0.95);
 }
 
 /* Enhanced Form Group for Phone Fields */

@@ -167,12 +167,6 @@ function OrderConfirmation() {
             <FaShoppingBag />
             Back to Homepage
           </Link>
-          <button 
-            onClick={() => window.print()} 
-            className="print-order-btn"
-          >
-            Print Order
-          </button>
         </div>
       </div>
     </div>

@@ -14,10 +14,12 @@ import {
   FaSearch,
   FaFileExcel
 } from 'react-icons/fa';
+import { FaBell } from 'react-icons/fa';
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import firebaseService from '../../services/firebaseService';
 import emailService from '../../services/emailService';
+import notificationService from '../../services/notificationService';
 import simpleNotification from '../../utils/simpleNotification';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../CustomAlert/CustomAlert';
@@ -26,6 +28,7 @@ import { useLoadingContext } from '../Loading/LoadingProvider';
 import Loading from '../Loading/Loading';
 import Notification from '../Notification/Notification';
 import PasswordDialog from '../PasswordDialog/PasswordDialog';
+import NotificationManager from '../Notifications/NotificationManager';
 import './AdminOrders.css';
 
 function AdminOrders() {
@@ -44,6 +47,7 @@ function AdminOrders() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
+  const [showNotificationManager, setShowNotificationManager] = useState(false);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -392,10 +396,20 @@ function AdminOrders() {
           }
         });
       }
-    } else {
-      console.error('❌ Failed to update order status in Firebase:', firebaseResult.error);
-      alert('حدث خطأ في تحديث حالة الطلب. يرجى المحاولة مرة أخرى.');
-    }
+      } else {
+        console.error('❌ Failed to update order status in Firebase:', firebaseResult.error);
+        alert('حدث خطأ في تحديث حالة الطلب. يرجى المحاولة مرة أخرى.');
+      }
+      
+      // Send notification for status update
+      if (firebaseResult.success && order && oldStatus !== newStatus) {
+        try {
+          await notificationService.sendOrderStatusNotification(order, oldStatus, newStatus);
+          console.log('✅ Status update notification sent');
+        } catch (error) {
+          console.error('❌ Failed to send status update notification:', error);
+        }
+      }
   };
 
   const deleteOrder = async (orderId) => {
@@ -543,21 +557,6 @@ function AdminOrders() {
     }
   };
 
-  // Test delete functionality
-  const testDeleteFunction = async () => {
-    try {
-      console.log('🧪 Testing delete functionality...');
-      const result = await firebaseService.testDelete();
-      if (result.success) {
-        await showAlert('اختبار الحذف نجح!', 'success');
-      } else {
-        await showAlert(`اختبار الحذف فشل: ${result.error}`, 'error');
-      }
-    } catch (error) {
-      console.error('Error testing delete:', error);
-      await showAlert(`خطأ في اختبار الحذف: ${error.message}`, 'error');
-    }
-  };
 
   // WallZ Secret: Delete all orders with password protection
   const deleteAllOrders = () => {
@@ -915,10 +914,6 @@ function AdminOrders() {
           🔄
           Refresh Orders
         </button>
-        <button onClick={testDeleteFunction} className="test-delete-btn">
-          🧪
-          Test Delete
-        </button>
         <button 
           onClick={deleteAllOrders} 
           className="delete-all-orders-btn"
@@ -939,6 +934,13 @@ function AdminOrders() {
         <button onClick={exportToExcel} className="export-excel-btn">
           <FaFileExcel />
           Export to Excel
+        </button>
+        <button 
+          onClick={() => setShowNotificationManager(!showNotificationManager)}
+          className="notification-settings-btn"
+        >
+          <FaBell />
+          Notification Settings
         </button>
         <Link to="/admin/deleted-orders" className="deleted-orders-btn">
           <FaTrash />
@@ -1176,6 +1178,24 @@ function AdminOrders() {
         message="أدخل كلمة السر للوصول لوظيفة حذف جميع الطلبات نهائياً"
         correctPassword="WallZ"
       />
+
+      {/* Notification Manager */}
+      {showNotificationManager && (
+        <div className="notification-manager-overlay">
+          <div className="notification-manager-modal">
+            <div className="modal-header">
+              <h3>🔔 Notification Settings</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowNotificationManager(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <NotificationManager />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
