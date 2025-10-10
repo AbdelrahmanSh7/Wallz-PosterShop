@@ -8,7 +8,6 @@ import {
   FaCalendarAlt,
   FaEye,
   FaCheckCircle,
-  FaTimesCircle,
   FaTrash,
   FaFilter,
   FaSearch,
@@ -18,9 +17,9 @@ import { FaBell } from 'react-icons/fa';
 import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import firebaseService from '../../services/firebaseService';
+import PrintOrder from './PrintOrder';
 import emailService from '../../services/emailService';
 import notificationService from '../../services/notificationService';
-import simpleNotification from '../../utils/simpleNotification';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../CustomAlert/CustomAlert';
 import { testFirebaseConnection } from '../../utils/firebaseTest';
@@ -33,7 +32,7 @@ import './AdminOrders.css';
 
 function AdminOrders() {
   const navigate = useNavigate();
-  const { alertState, showAlert, hideAlert } = useCustomAlert();
+  const { alertState, showAlert } = useCustomAlert();
   const { startComponentLoading, stopComponentLoading, isComponentLoading } = useLoadingContext();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -48,6 +47,8 @@ function AdminOrders() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
   const [showNotificationManager, setShowNotificationManager] = useState(false);
+  const [showPrintOrder, setShowPrintOrder] = useState(false);
+  const [printOrderData, setPrintOrderData] = useState(null);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -531,31 +532,6 @@ function AdminOrders() {
 
 
 
-  // Manual refresh function
-  const handleManualRefresh = async () => {
-    console.log('🔄 Manual refresh triggered');
-    
-    // Reload orders from Firebase
-    const result = await firebaseService.getOrders();
-    
-    if (result.success) {
-      setOrders(result.orders);
-      setFilteredOrders(result.orders);
-      
-      // Show success message
-      await showAlert(`Orders refreshed successfully!\nFound ${result.orders.length} orders from Firebase.`, 'success');
-      console.log(`✅ Found ${result.orders.length} orders from Firebase`);
-    } else {
-      console.error('❌ Failed to refresh orders from Firebase:', result.error);
-      
-      // Fallback to localStorage
-      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      setOrders(updatedOrders);
-      setFilteredOrders(updatedOrders);
-      
-      alert(`⚠️ Firebase unavailable, using local data.\nFound ${updatedOrders.length} orders.`);
-    }
-  };
 
 
   // WallZ Secret: Delete all orders with password protection
@@ -683,6 +659,17 @@ function AdminOrders() {
     console.log('❌ WallZ Secret: Password dialog cancelled by user');
   };
 
+  // Handle print order
+  const handlePrintOrder = (order) => {
+    setPrintOrderData(order);
+    setShowPrintOrder(true);
+  };
+
+  const handleClosePrintOrder = () => {
+    setShowPrintOrder(false);
+    setPrintOrderData(null);
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -773,8 +760,8 @@ function AdminOrders() {
         fgColor: { argb: 'FFE1306C' }
       };
 
-      // Add data rows
-      orders.forEach(order => {
+      // Add data rows - use filteredOrders to exclude deleted orders
+      filteredOrders.forEach(order => {
         const customer = order.customer || order.customerData || {};
         const itemsDetails = order.items?.map(item => 
           `${item.name} (${item.size}, ${item.color}) x${item.quantity} = ${item.price * item.quantity} EGP`
@@ -807,7 +794,7 @@ function AdminOrders() {
       summaryRow.getCell(1).value = 'SUMMARY';
       summaryRow.getCell(1).font = { bold: true };
       
-      summaryRow.getCell(9).value = `Total Orders: ${getTotalOrders()}`;
+      summaryRow.getCell(9).value = `Total Orders: ${filteredOrders.length}`;
       summaryRow.getCell(10).value = `Total Revenue: ${getTotalRevenue()} EGP`;
       summaryRow.getCell(9).font = { bold: true };
       summaryRow.getCell(10).font = { bold: true };
@@ -910,10 +897,6 @@ function AdminOrders() {
             <option value="name-desc">👤 Name Z-A</option>
           </select>
         </div>
-        <button onClick={handleManualRefresh} className="refresh-btn">
-          🔄
-          Refresh Orders
-        </button>
         <button 
           onClick={deleteAllOrders} 
           className="delete-all-orders-btn"
@@ -1017,6 +1000,13 @@ function AdminOrders() {
                 >
                   <FaEye />
                   View Details
+                </button>
+                
+                <button 
+                  onClick={() => handlePrintOrder(order)}
+                  className="print-btn"
+                >
+                  🖨️ Print
                 </button>
                 
                 <div className="status-actions">
@@ -1136,7 +1126,7 @@ function AdminOrders() {
             {/* Print Button */}
             <div className="modal-actions">
               <button 
-                onClick={() => window.print()} 
+                onClick={() => handlePrintOrder(selectedOrder)} 
                 className="print-order-btn"
               >
                 🖨️ Print Order
@@ -1195,6 +1185,14 @@ function AdminOrders() {
             <NotificationManager />
           </div>
         </div>
+      )}
+
+      {/* Print Order Modal */}
+      {showPrintOrder && printOrderData && (
+        <PrintOrder 
+          order={printOrderData} 
+          onClose={handleClosePrintOrder}
+        />
       )}
     </div>
   );

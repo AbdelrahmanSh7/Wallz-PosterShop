@@ -128,3 +128,5 @@ Update the `serverUrl` in `notificationService.js` to point to your deployed ser
 - Use environment variables in production
 - Enable HTTPS for production deployment
 - Regularly rotate VAPID keys
+
+

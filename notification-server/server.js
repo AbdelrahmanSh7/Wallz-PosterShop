@@ -255,3 +255,5 @@ app.listen(PORT, () => {
   console.log(`📱 VAPID Public Key: ${vapidKeys.publicKey}`);
   console.log(`📧 Email notifications to: wallz.egy@gmail.com`);
 });
+
+

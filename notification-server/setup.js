@@ -67,3 +67,5 @@ console.log('1. Opening the website');
 console.log('2. Enabling notifications');
 console.log('3. Placing a test order');
 console.log('4. Checking your device and email for notifications');
+
+
