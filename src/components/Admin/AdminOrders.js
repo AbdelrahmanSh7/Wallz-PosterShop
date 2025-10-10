@@ -18,8 +18,8 @@ import ExcelJS from 'exceljs';
 import { sendStatusUpdateNotification } from '../../utils/emailService';
 import firebaseService from '../../services/firebaseService';
 import PrintOrder from './PrintOrder';
-import emailService from '../../services/emailService';
 import notificationService from '../../services/notificationService';
+import emailService from '../../services/emailService';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../CustomAlert/CustomAlert';
 import { testFirebaseConnection } from '../../utils/firebaseTest';
@@ -45,32 +45,63 @@ function AdminOrders() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
   const [showNotificationManager, setShowNotificationManager] = useState(false);
   const [showPrintOrder, setShowPrintOrder] = useState(false);
   const [printOrderData, setPrintOrderData] = useState(null);
+  const [showDeletedOrders, setShowDeletedOrders] = useState(false);
+  const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
 
-  // Check if admin is logged in
+  // Check if admin is logged in and initialize notifications
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('adminLoggedIn');
     if (!isLoggedIn) {
       navigate('/admin/login');
       return;
     }
+
+    // Initialize notification service
+    const initNotifications = async () => {
+      try {
+        console.log('🔔 Initializing notification service...');
+        await notificationService.initialize();
+        console.log('✅ Notification service initialized successfully');
+      } catch (error) {
+        console.error('❌ Failed to initialize notification service:', error);
+      }
+    };
+
+    initNotifications();
   }, [navigate]);
 
-  // Update deleted orders count and auto-refresh
+  // Load show/hide preference and sync across devices
   useEffect(() => {
-    const updateDeletedCount = () => {
-      const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-      setDeletedOrdersCount(deleted.length);
+    const savedPreference = localStorage.getItem('showDeletedOrders');
+    const initialShow = savedPreference === 'true';
+    setShowDeletedOrders(initialShow);
+    
+    // Listen for storage changes from other devices
+    const handleStorageChange = (e) => {
+      if (e.key === 'showDeletedOrders') {
+        const newShowDeleted = e.newValue === 'true';
+        setShowDeletedOrders(newShowDeleted);
+        console.log('🔄 Show deleted orders preference synced from other device:', newShowDeleted);
+      }
+      if (e.key === 'deletedOrders') {
+        const deletedOrders = JSON.parse(e.newValue || '[]');
+        setDeletedOrdersCount(deletedOrders.length);
+        console.log('🔄 Deleted orders synced from other device:', deletedOrders.length);
+      }
     };
-    
-    updateDeletedCount();
-    
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Auto-refresh orders every 30 seconds for cross-device sync
+  useEffect(() => {
     // Listen for storage changes
     const handleStorageChange = () => {
-      updateDeletedCount();
+      // Storage change handler
     };
     
     // Auto-refresh orders every 30 seconds for cross-device sync
@@ -88,20 +119,45 @@ function AdminOrders() {
             deletedOrderIds = firebaseDeletedOrders.map(order => order.originalId || order.id);
             // Update localStorage with Firebase data
             localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
-            setDeletedOrdersCount(firebaseDeletedOrders.length);
             console.log('✅ Deleted orders synced from Firebase:', firebaseDeletedOrders.length);
           } else {
             // Fallback to localStorage
             deletedOrderIds = JSON.parse(localStorage.getItem('deletedOrders') || '[]').map(order => order.originalId || order.id);
           }
           
-          const activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          // Filter orders based on showDeletedOrders preference
+          let activeOrders;
+          if (showDeletedOrders) {
+            // Show all orders (including deleted ones)
+            activeOrders = result.orders;
+          } else {
+            // Hide deleted orders
+            activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          }
+          
+          // Update deleted orders count
+          setDeletedOrdersCount(deletedOrderIds.length);
           
           // Only update if orders have changed
           if (JSON.stringify(activeOrders) !== JSON.stringify(orders)) {
             setOrders(activeOrders);
             setFilteredOrders(activeOrders);
-            console.log('🔄 Orders updated from Firebase:', activeOrders.length);
+            console.log('🔄 Orders updated from Firebase:', activeOrders.length, showDeletedOrders ? '(including deleted)' : '(excluding deleted)');
+            
+            // Check for new orders and send notifications
+            const isAdminPanelOpen = window.location.pathname.includes('/admin/orders');
+            if (activeOrders.length > orders.length && !isAdminPanelOpen) {
+              const newOrders = activeOrders.filter(order => !orders.find(existing => existing.id === order.id));
+              if (newOrders.length > 0) {
+                const latestOrder = newOrders[0];
+                try {
+                  await notificationService.sendNewOrderNotification(latestOrder);
+                  console.log('🔔 Auto-refresh notification sent for new order:', latestOrder.id);
+                } catch (error) {
+                  console.error('❌ Failed to send auto-refresh notification:', error);
+                }
+              }
+            }
           }
         }
       } catch (error) {
@@ -123,7 +179,7 @@ function AdminOrders() {
       window.removeEventListener('ordersUpdated', handleOrdersUpdate);
       clearInterval(refreshInterval);
     };
-  }, [orders]);
+  }, [orders, showDeletedOrders]);
 
   // Helper function to clean deleted orders from localStorage
   const cleanDeletedOrdersFromStorage = () => {
@@ -167,7 +223,6 @@ function AdminOrders() {
             deletedOrderIds = firebaseDeletedOrders.map(order => order.originalId || order.id);
             // Update localStorage with Firebase data
             localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
-            setDeletedOrdersCount(firebaseDeletedOrders.length);
             console.log('✅ Deleted orders synced from Firebase:', firebaseDeletedOrders.length);
           } else {
             // Fallback to localStorage
@@ -175,11 +230,22 @@ function AdminOrders() {
             console.log('⚠️ Using localStorage deleted orders as fallback');
           }
           
-          const activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          // Filter orders based on showDeletedOrders preference
+          let activeOrders;
+          if (showDeletedOrders) {
+            // Show all orders (including deleted ones)
+            activeOrders = result.orders;
+          } else {
+            // Hide deleted orders
+            activeOrders = result.orders.filter(order => !deletedOrderIds.includes(order.id));
+          }
+          
+          // Update deleted orders count
+          setDeletedOrdersCount(deletedOrderIds.length);
           
           setOrders(activeOrders);
           setFilteredOrders(activeOrders);
-          console.log('✅ Orders loaded from Firebase:', activeOrders.length, '(filtered out deleted orders)');
+          console.log('✅ Orders loaded from Firebase:', activeOrders.length, showDeletedOrders ? '(including deleted)' : '(excluding deleted)');
           
           // Mark new orders (created in last 24 hours)
           const now = new Date();
@@ -194,6 +260,17 @@ function AdminOrders() {
           if (newOrderIds.length > 0 && !isAdminPanelOpen) {
             setNotificationCount(newOrderIds.length);
             setShowNotification(true);
+            
+            // Send push notification for new orders
+            try {
+              const latestOrder = activeOrders.find(order => newOrderIds.includes(order.id));
+              if (latestOrder) {
+                await notificationService.sendNewOrderNotification(latestOrder);
+                console.log('🔔 Push notification sent for new order:', latestOrder.id);
+              }
+            } catch (error) {
+              console.error('❌ Failed to send push notification:', error);
+            }
           }
         } else {
           console.error('❌ Failed to load orders from Firebase:', result.error);
@@ -247,8 +324,8 @@ function AdminOrders() {
       }
     };
 
-    loadOrders();
-  }, []);
+      loadOrders();
+  }, [showDeletedOrders]);
 
   // Listen for Firebase real-time updates
   useEffect(() => {
@@ -453,13 +530,9 @@ function AdminOrders() {
             };
             deletedOrders.push(orderWithDeleteInfo);
             localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
-            setDeletedOrdersCount(deletedOrders.length);
             console.log('🗑️ Order moved to deleted orders:', orderId);
             
             // Force update the count immediately
-            setTimeout(() => {
-              setDeletedOrdersCount(prev => prev + 1);
-            }, 100);
             
             // Save to Firebase for cross-device sync
             try {
@@ -595,13 +668,9 @@ function AdminOrders() {
         
         // Save to deleted orders
         localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
-        setDeletedOrdersCount(deletedOrders.length);
         console.log('🗑️ All orders moved to deleted orders:', allOrders.length);
         
         // Force update the count immediately
-        setTimeout(() => {
-          setDeletedOrdersCount(deletedOrders.length);
-        }, 100);
         
         // Save to Firebase for cross-device sync
         try {
@@ -652,6 +721,7 @@ function AdminOrders() {
       stopComponentLoading('deleteAll');
     }
   };
+
 
   // Handle password dialog cancel
   const handlePasswordCancel = () => {
@@ -927,7 +997,7 @@ function AdminOrders() {
         </button>
         <Link to="/admin/deleted-orders" className="deleted-orders-btn">
           <FaTrash />
-          Deleted Orders ({deletedOrdersCount})
+          Deleted Orders
         </Link>
       </div>
 

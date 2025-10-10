@@ -202,8 +202,7 @@ const PrintOrder = ({ order, onClose }) => {
             <h4>Thank you for choosing WallZ!</h4>
             <p>For any inquiries, please contact us at:</p>
             <p>📧 Email: wallz.egy@gmail.com</p>
-            <p>📱 Phone: +20 123 456 7890</p>
-            <p>🌐 Website: www.wallz.com</p>
+            <p>📱 Phone: +20 1112659808</p>
           </div>
           <div className="footer-note">
             <p><strong>Note:</strong> This is a computer-generated order summary. Please keep this document for your records.</p>

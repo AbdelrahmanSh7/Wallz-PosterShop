@@ -3,8 +3,8 @@
 
 export const emailConfig = {
   // EmailJS Service Configuration
-  serviceId: 'service_wallz', // Replace with your actual EmailJS service ID
-  publicKey: 'YOUR_PUBLIC_KEY', // Replace with your actual EmailJS public key
+  serviceId: 'service_wallz', // Your EmailJS service ID
+  publicKey: 'YOUR_PUBLIC_KEY', // Your EmailJS public key (get from EmailJS dashboard)
   
   // Email Templates
   templates: {
@@ -20,6 +20,15 @@ export const emailConfig = {
     autoSend: true, // Automatically send emails
     retryAttempts: 3, // Number of retry attempts if email fails
     retryDelay: 2000 // Delay between retry attempts (ms)
+  }
+};
+
+// Temporary email service using Gmail SMTP (for testing)
+export const gmailConfig = {
+  service: 'gmail',
+  auth: {
+    user: 'wallz.egy@gmail.com',
+    pass: 'your-app-password' // Use App Password from Google Account
   }
 };
 

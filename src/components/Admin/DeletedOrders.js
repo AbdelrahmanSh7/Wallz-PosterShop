@@ -17,6 +17,8 @@ function DeletedOrders() {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showDeletedOrders, setShowDeletedOrders] = useState(true);
+  const [deletedOrdersCount, setDeletedOrdersCount] = useState(0);
 
   // Check if admin is logged in
   useEffect(() => {
@@ -27,6 +29,31 @@ function DeletedOrders() {
     }
   }, [navigate]);
 
+  // Load show/hide preference and sync across devices
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('showDeletedOrders');
+    const initialShow = savedPreference === 'true';
+    setShowDeletedOrders(initialShow);
+    
+    // Listen for storage changes from other devices
+    const handleStorageChange = (e) => {
+      if (e.key === 'showDeletedOrders') {
+        const newShowDeleted = e.newValue === 'true';
+        setShowDeletedOrders(newShowDeleted);
+        console.log('🔄 Show deleted orders preference synced from other device:', newShowDeleted);
+      }
+      if (e.key === 'deletedOrders') {
+        const deletedOrders = JSON.parse(e.newValue || '[]');
+        setDeletedOrders(deletedOrders);
+        setDeletedOrdersCount(deletedOrders.length);
+        console.log('🔄 Deleted orders synced from other device:', deletedOrders.length);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Load deleted orders from Firebase and localStorage
   useEffect(() => {
     const loadDeletedOrders = async () => {
@@ -35,20 +62,34 @@ function DeletedOrders() {
         
         // First try to load from Firebase
         const firebaseResult = await firebaseService.getDeletedOrders();
+        let allDeletedOrders = [];
+        
         if (firebaseResult.success) {
-          const firebaseDeletedOrders = firebaseResult.deletedOrders || [];
-          setDeletedOrders(firebaseDeletedOrders);
-          setFilteredOrders(firebaseDeletedOrders);
+          allDeletedOrders = firebaseResult.deletedOrders || [];
           // Update localStorage with Firebase data
-          localStorage.setItem('deletedOrders', JSON.stringify(firebaseDeletedOrders));
-          console.log('📋 Loaded deleted orders from Firebase:', firebaseDeletedOrders.length);
+          localStorage.setItem('deletedOrders', JSON.stringify(allDeletedOrders));
+          console.log('📋 Loaded deleted orders from Firebase:', allDeletedOrders.length);
         } else {
           // Fallback to localStorage
-          const deleted = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
-          setDeletedOrders(deleted);
-          setFilteredOrders(deleted);
-          console.log('📋 Loaded deleted orders from localStorage:', deleted.length);
+          allDeletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+          console.log('📋 Loaded deleted orders from localStorage:', allDeletedOrders.length);
         }
+        
+        setDeletedOrders(allDeletedOrders);
+        
+        // Apply show/hide preference
+        const savedPreference = localStorage.getItem('showDeletedOrders');
+        const shouldShow = savedPreference === 'true';
+        setShowDeletedOrders(shouldShow);
+        
+        if (shouldShow) {
+          setFilteredOrders(allDeletedOrders);
+          setDeletedOrdersCount(allDeletedOrders.length);
+        } else {
+          setFilteredOrders([]);
+          setDeletedOrdersCount(0);
+        }
+        
       } catch (error) {
         console.error('Error loading deleted orders:', error);
         // Fallback to localStorage
@@ -63,10 +104,17 @@ function DeletedOrders() {
     loadDeletedOrders();
   }, []);
 
-  // Filter orders based on search term
+  // Filter orders based on search term and show/hide preference
   useEffect(() => {
+    if (!showDeletedOrders) {
+      setFilteredOrders([]);
+      setDeletedOrdersCount(0);
+      return;
+    }
+    
     if (!searchTerm.trim()) {
       setFilteredOrders(deletedOrders);
+      setDeletedOrdersCount(deletedOrders.length);
     } else {
       const filtered = deletedOrders.filter(order => 
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,8 +123,9 @@ function DeletedOrders() {
         order.customer?.phone2?.includes(searchTerm)
       );
       setFilteredOrders(filtered);
+      setDeletedOrdersCount(filtered.length);
     }
-  }, [searchTerm, deletedOrders]);
+  }, [searchTerm, deletedOrders, showDeletedOrders]);
 
   // Restore order
   const restoreOrder = async (orderId) => {
@@ -115,7 +164,25 @@ function DeletedOrders() {
     }
   };
 
-
+  // Toggle show/hide deleted orders
+  const toggleShowDeletedOrders = () => {
+    const newShowDeleted = !showDeletedOrders;
+    setShowDeletedOrders(newShowDeleted);
+    
+    // Save preference to localStorage for cross-device sync
+    localStorage.setItem('showDeletedOrders', newShowDeleted.toString());
+    
+    // Update filtered orders based on preference
+    if (newShowDeleted) {
+      setFilteredOrders(deletedOrders);
+      setDeletedOrdersCount(deletedOrders.length);
+    } else {
+      setFilteredOrders([]);
+      setDeletedOrdersCount(0);
+    }
+    
+    console.log(`🔄 Toggle deleted orders: ${newShowDeleted ? 'showing' : 'hiding'} deleted orders`);
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -156,7 +223,7 @@ function DeletedOrders() {
           <div className="stat-card">
             <FaHistory />
             <div>
-              <span className="stat-number">{deletedOrders.length}</span>
+              <span className="stat-number">{showDeletedOrders ? deletedOrdersCount : 0}</span>
               <span className="stat-label">Deleted Orders</span>
             </div>
           </div>
@@ -174,6 +241,13 @@ function DeletedOrders() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        <button 
+          onClick={toggleShowDeletedOrders} 
+          className={`toggle-deleted-orders-btn ${showDeletedOrders ? 'showing' : 'hiding'}`}
+        >
+          {showDeletedOrders ? '👁️ Hide Deleted' : '👁️ Show Deleted'}
+        </button>
         
       </div>
 

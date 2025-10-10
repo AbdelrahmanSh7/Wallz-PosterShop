@@ -129,9 +129,9 @@ class NotificationService {
         icon: '/icons/icon-192x192.png',
         badge: '/icons/badge-72x72.png',
         image: options.image || '/icons/icon-512x512.png',
-        vibrate: [100, 50, 100],
-        requireInteraction: options.persistent || false,
-        silent: options.silent || false,
+        vibrate: [200, 100, 200, 100, 200], // Enhanced vibration pattern
+        requireInteraction: options.persistent || true, // Make notifications persistent
+        silent: false, // Always enable sound
         tag: options.tag || 'wallz-notification',
         data: {
           url: options.url || '/',
@@ -155,11 +155,55 @@ class NotificationService {
 
       const notification = new Notification(title, notificationOptions);
       
+      // Play notification sound
+      this.playNotificationSound();
+      
       console.log('✅ Local notification sent:', title);
       return notification;
     } catch (error) {
       console.error('❌ Failed to send local notification:', error);
       return false;
+    }
+  }
+
+  // Play notification sound
+  playNotificationSound() {
+    try {
+      // Try to play notification sound
+      const audio = new Audio('/sounds/notification.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(error => {
+        console.log('Could not play notification sound:', error);
+        // Fallback: use Web Audio API to generate a simple beep
+        this.generateBeepSound();
+      });
+    } catch (error) {
+      console.log('Could not create audio:', error);
+      // Fallback: use Web Audio API to generate a simple beep
+      this.generateBeepSound();
+    }
+  }
+
+  // Generate a simple beep sound using Web Audio API
+  generateBeepSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800; // Frequency in Hz
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+      console.log('Could not generate beep sound:', error);
     }
   }
 

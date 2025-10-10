@@ -20,16 +20,15 @@ export const sendNewOrderNotification = async (orderData) => {
       to_email: emailConfig.adminEmail,
       order_id: orderData.id,
       customer_name: orderData.customer?.fullName || orderData.customerData?.fullName || 'N/A',
+      customer_email: orderData.customer?.email || orderData.customerData?.email || 'N/A',
       customer_phone: orderData.customer?.phone1 || orderData.customerData?.phone1 || 'N/A',
       customer_governorate: governorateDisplayName,
       customer_address: orderData.customer?.address || orderData.customerData?.address || 'N/A',
       order_date: new Date(orderData.date || orderData.orderDate).toLocaleDateString('en-GB'),
       order_status: orderData.status || 'pending',
-      order_total: orderData.total || orderData.finalTotal || 0,
-      order_subtotal: orderData.subtotal || 0,
-      order_shipping: orderData.shipping || orderData.shippingCost || 0,
+      total_price: orderData.total || orderData.finalTotal || 0,
+      items: formatItemsDetails(orderData.items || []),
       items_count: orderData.items?.length || 0,
-      items_details: formatItemsDetails(orderData.items || []),
       site_url: window.location.origin
     };
 

@@ -1,176 +1,179 @@
-# 📧 Email Setup Instructions - تعليمات إعداد الإيميل
+# إعداد الإيميل لـ WallZ - تعليمات مفصلة
 
-## ✅ تم إعداد نظام الإيميل التلقائي!
-
-### **🎯 الميزة الجديدة:**
-- **إرسال إيميل تلقائي** عند وصول طلب جديد
-- **رسالة حماسية باللغة الإنجليزية** لـ wallz.egy@gmail.com
-- **إرسال إيميل** عند تحديث حالة الطلب
-
-### **🔧 الملفات المضافة:**
-
-#### **1. `src/services/emailService.js`:**
-- خدمة الإيميل الرئيسية
-- إرسال إيميلات الطلبات الجديدة
-- إرسال إيميلات تحديث الحالة
-- آلية إعادة المحاولة
-
-#### **2. `src/config/emailConfig.js`:**
-- إعدادات EmailJS
-- قوالب الإيميل
-- إعدادات الإدارة
-
-#### **3. `src/templates/emailTemplates.js`:**
-- قوالب HTML للإيميلات
-- تصميم احترافي وجذاب
-- رسائل حماسية باللغة الإنجليزية
-
-### **📧 خطوات الإعداد:**
-
-#### **1. إنشاء حساب EmailJS:**
-1. اذهب إلى [https://www.emailjs.com/](https://www.emailjs.com/)
-2. أنشئ حساب مجاني
-3. اربط حساب Gmail الخاص بك
-
-#### **2. إنشاء خدمة الإيميل:**
-1. في لوحة تحكم EmailJS
-2. اضغط على "Add New Service"
-3. اختر "Gmail"
-4. اربط حساب wallz.egy@gmail.com
-5. احفظ Service ID
-
-#### **3. إنشاء قوالب الإيميل:**
-
-##### **قالب الطلب الجديد (template_new_order):**
-```html
-Subject: 🎉 NEW ORDER ALERT! - WallZ Store
-
-🎉 NEW ORDER ALERT!
-
-A new order has just been placed on your WallZ store!
-
-Order Details:
-- Order ID: {{order_id}}
-- Date: {{order_date}}
-- Customer: {{customer_name}}
-- Phone: {{customer_phone1}}
-- Address: {{customer_address}}, {{customer_governorate}}
-- Total: {{total_amount}} EGP
-- Items: {{items_count}} items
-
-Items List:
-{{items_list}}
-
-Action Required: Process this order as soon as possible!
-
-© 2024 WallZ - Your Wall Art Store
+## المشكلة الحالية
+```
+412 Gmail_API: Request had insufficient authentication scopes
 ```
 
-##### **قالب تحديث الحالة (template_status_update):**
-```html
-Subject: 📊 Order Status Updated - WallZ Store
+هذا الخطأ يحدث لأن Gmail يحتاج صلاحيات إضافية لإرسال الإيميلات.
 
-📊 Order Status Updated!
+## الحلول المتاحة
 
-Order Information:
-- Order ID: {{order_id}}
-- Customer: {{customer_name}}
-- Date: {{order_date}}
-- Total: {{total_amount}} EGP
+### الحل الأول: إعداد Gmail App Password (الأسهل)
 
-Status Change:
-- Previous: {{old_status}}
-- New: {{new_status}}
+1. **اذهب إلى Google Account Settings:**
+   - https://myaccount.google.com/
+   - أو https://accounts.google.com/
 
-© 2024 WallZ - Your Wall Art Store
+2. **تفعيل 2-Step Verification:**
+   - Security → 2-Step Verification
+   - فعّل التحقق بخطوتين
+
+3. **إنشاء App Password:**
+   - Security → App passwords
+   - اختر "Mail" كتطبيق
+   - اختر "Other" واكتب "WallZ Email Service"
+   - انسخ كلمة المرور التي تظهر (16 حرف)
+
+4. **تحديث إعدادات EmailJS:**
+   - استخدم كلمة المرور الجديدة في EmailJS
+   - تأكد من أن Service ID صحيح: `service_z7sjam`
+
+### الحل الثاني: استخدام Outlook بدلاً من Gmail
+
+1. **إنشاء حساب Outlook جديد:**
+   - اذهب إلى https://outlook.live.com/
+   - أنشئ حساب جديد أو استخدم موجود
+
+2. **إعداد EmailJS مع Outlook:**
+   - في EmailJS، اختر "Outlook" بدلاً من "Gmail"
+   - أدخل بيانات حساب Outlook
+
+### الحل الثالث: إعداد Gmail مع OAuth (متقدم)
+
+1. **إنشاء Google Cloud Project:**
+   - https://console.cloud.google.com/
+   - أنشئ مشروع جديد
+
+2. **تفعيل Gmail API:**
+   - APIs & Services → Library
+   - ابحث عن "Gmail API" وفعّله
+
+3. **إنشاء OAuth 2.0 Credentials:**
+   - APIs & Services → Credentials
+   - Create Credentials → OAuth 2.0 Client ID
+   - Web application
+
+4. **إعداد Authorized Redirect URIs:**
+   ```
+   https://service.emailjs.com/admin/oauth/callback
+   ```
+
+## الخطوات العملية لإصلاح المشكلة الآن
+
+### الخطوة 1: إنشاء App Password
+```
+1. اذهب إلى: https://myaccount.google.com/security
+2. فعّل 2-Step Verification إذا لم تكن مفعلة
+3. انتقل إلى: https://myaccount.google.com/apppasswords
+4. اختر "Mail" و "Other (Custom name)"
+5. اكتب "WallZ Email Service"
+6. انسخ كلمة المرور المكونة من 16 حرف
 ```
 
-#### **4. تحديث الإعدادات:**
-في ملف `src/config/emailConfig.js`:
+### الخطوة 2: تحديث EmailJS
+```
+1. في EmailJS، اختر "Disconnect" ثم "Connect" مرة أخرى
+2. استخدم كلمة المرور الجديدة (App Password)
+3. تأكد من أن Service ID: service_z7sjam
+4. جرب "Send test email"
+```
+
+### الخطوة 3: تحديث الكود (إذا لزم الأمر)
 ```javascript
+// في src/config/emailConfig.js
 export const emailConfig = {
-  serviceId: 'YOUR_ACTUAL_SERVICE_ID', // استبدل بالـ Service ID الحقيقي
-  publicKey: 'YOUR_ACTUAL_PUBLIC_KEY', // استبدل بالـ Public Key الحقيقي
-  // باقي الإعدادات...
+  serviceId: 'service_z7sjam', // Service ID الصحيح
+  publicKey: 'YOUR_PUBLIC_KEY', // Public Key من EmailJS
+  templates: {
+    newOrder: 'template_new_order',
+    statusUpdate: 'template_status_update'
+  },
+  adminEmail: 'wallz.egy@gmail.com',
+  settings: {
+    autoSend: true,
+    retryAttempts: 3,
+    retryDelay: 2000
+  }
 };
 ```
 
-### **🧪 كيفية الاختبار:**
+## اختبار الإيميل
 
-#### **1. اختبار إرسال الإيميل:**
-1. افتح Developer Console (F12)
-2. اكتب: `emailService.testEmail()`
-3. اضغط Enter
-4. **يجب أن تصل رسالة تجريبية على wallz.egy@gmail.com**
+### بعد إصلاح المشكلة:
+1. **اختبار مباشر:**
+   - اذهب إلى الموقع
+   - ضع طلب تجريبي
+   - تحقق من وصول الإيميل
 
-#### **2. اختبار طلب جديد:**
-1. اذهب إلى صفحة السلة
-2. أضف منتجات للسلة
-3. املأ بيانات العميل
-4. اضغط "Place Order"
-5. **يجب أن تصل رسالة على wallz.egy@gmail.com**
+2. **اختبار EmailJS:**
+   - في EmailJS، استخدم "Send test email"
+   - تأكد من وصول الإيميل التجريبي
 
-#### **3. اختبار تحديث الحالة:**
-1. اذهب إلى لوحة الإدارة
-2. غيّر حالة طلب
-3. **يجب أن تصل رسالة تحديث على wallz.egy@gmail.com**
+## ملاحظات مهمة
 
-### **🎯 الميزات:**
+### حدود Gmail:
+- **Free Account:** 500 إيميل يومياً
+- **Google Workspace:** 2000 إيميل يومياً
 
-#### **1. رسائل حماسية:**
-- **🎉 NEW ORDER ALERT!** للطلبات الجديدة
-- **📊 Order Status Updated** لتحديث الحالة
-- **رسائل باللغة الإنجليزية** بشكل احترافي
+### بدائل أخرى:
+1. **SendGrid:** مجاني حتى 100 إيميل يومياً
+2. **Mailgun:** مجاني حتى 5000 إيميل شهرياً
+3. **Outlook:** مثل Gmail مع حدود مماثلة
 
-#### **2. معلومات شاملة:**
-- **تفاصيل الطلب** كاملة
-- **بيانات العميل** كاملة
-- **قائمة المنتجات** مع الأسعار
-- **المبلغ الإجمالي** والتفاصيل
+## استكشاف الأخطاء
 
-#### **3. آلية موثوقة:**
-- **إعادة المحاولة** عند الفشل (3 مرات)
-- **تأخير ذكي** بين المحاولات
-- **تسجيل مفصل** للأخطاء
-
-### **📧 مثال على الرسالة:**
-
+### إذا استمر الخطأ:
 ```
-🎉 NEW ORDER ALERT!
-
-A new order has just been placed on your WallZ store!
-
-Order Details:
-- Order ID: 1703123456789
-- Date: December 21, 2024 at 2:30 PM
-- Customer: Ahmed Mohamed
-- Phone: 01234567890
-- Address: 123 Main Street, Cairo
-- Total: 250 EGP
-- Items: 2 items
-
-Items List:
-- Wall Art Poster 1 (Qty: 1) - 150 EGP
-- Wall Art Poster 2 (Qty: 1) - 100 EGP
-
-Action Required: Process this order as soon as possible!
-
-© 2024 WallZ - Your Wall Art Store
+1. تأكد من تفعيل 2-Step Verification
+2. تأكد من استخدام App Password وليس كلمة المرور العادية
+3. تأكد من أن Service ID صحيح
+4. جرب إعادة الاتصال في EmailJS
 ```
 
-### **🔧 استكشاف الأخطاء:**
+### إذا لم تصل الإيميلات:
+```
+1. تحقق من Spam/Junk folder
+2. تأكد من عنوان الإيميل الصحيح
+3. تحقق من إعدادات Firewall/Antivirus
+4. جرب إيميل آخر للاختبار
+```
 
-#### **إذا لم تصل الرسائل:**
-1. تأكد من صحة Service ID و Public Key
-2. تأكد من ربط Gmail بشكل صحيح
-3. تحقق من Console للأخطاء
-4. تأكد من تفعيل الإيميلات في Gmail
+## الكود المحدث للإيميل
 
-#### **إذا فشل الإرسال:**
-1. تحقق من اتصال الإنترنت
-2. تأكد من صحة قوالب الإيميل
-3. تحقق من حدود EmailJS (100 إيميل/شهر مجاناً)
+```javascript
+// إضافة في src/services/emailService.js
+export const sendTestEmail = async () => {
+  try {
+    const templateParams = {
+      to_email: 'wallz.egy@gmail.com',
+      subject: 'Test Email from WallZ',
+      message: 'This is a test email to verify email configuration.',
+      from_name: 'WallZ System'
+    };
 
-## 🎉 النظام جاهز للاستخدام!
+    const response = await emailjs.send(
+      emailConfig.serviceId,
+      emailConfig.templates.newOrder,
+      templateParams
+    );
 
-**بعد إعداد EmailJS، ستحصل على إيميلات تلقائية حماسية عند كل طلب جديد!** 📧✨
+    console.log('✅ Test email sent successfully:', response);
+    return { success: true, response };
+  } catch (error) {
+    console.error('❌ Test email failed:', error);
+    return { success: false, error };
+  }
+};
+```
+
+## الخطوات التالية
+
+1. **فوراً:** أنشئ App Password وحدث EmailJS
+2. **اختبار:** جرب إرسال إيميل تجريبي
+3. **مراقبة:** راقب وصول إيميلات الطلبات الجديدة
+4. **تحسين:** إذا احتجت، فكر في استخدام خدمة إيميل احترافية
+
+---
+
+**ملاحظة:** إذا استمرت المشكلة، يمكنني مساعدتك في إعداد خدمة إيميل بديلة مثل SendGrid أو Mailgun.

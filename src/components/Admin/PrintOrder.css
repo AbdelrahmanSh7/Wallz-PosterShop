@@ -438,6 +438,27 @@
 
 /* Print Styles */
 @media print {
+  /* Hide everything except the print content */
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-content, .print-content * {
+    visibility: visible;
+  }
+  
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
   .print-order-container {
     position: static;
     background: white;
@@ -453,22 +474,15 @@
     display: none !important;
   }
 
-  .print-content {
-    box-shadow: none;
-    border-radius: 0;
-    padding: 20px;
-    max-width: none;
-    width: 100%;
-  }
-
   .print-header {
     page-break-inside: avoid;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
   }
 
   .print-section {
     page-break-inside: avoid;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
   }
 
   .items-table {
@@ -477,12 +491,68 @@
 
   .print-footer {
     page-break-inside: avoid;
-    margin-top: 30px;
+    margin-top: 20px;
+    padding-top: 15px;
   }
 
-  .order-meta-info {
-    page-break-inside: avoid;
-    margin-top: 15px;
+  /* Compact layout for print */
+  .print-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .logo-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .order-info {
+    text-align: left;
+  }
+
+  .order-info h2 {
+    font-size: 1.4rem;
+  }
+
+  .print-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+
+  .customer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .customer-item span {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+
+  .table-header, .table-row {
+    grid-template-columns: 60px 1fr 50px 70px 70px;
+    gap: 8px;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .col-image img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .summary-table {
+    padding: 15px;
+  }
+
+  .delivery-info {
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .print-footer {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    font-size: 0.9rem;
   }
 
   /* Ensure proper spacing in print */
@@ -492,8 +562,8 @@
   }
 
   body {
-    font-size: 12pt;
-    line-height: 1.4;
+    font-size: 11pt;
+    line-height: 1.3;
   }
 
   h1, h2, h3, h4 {
@@ -501,15 +571,6 @@
   }
 
   .table-row {
-    page-break-inside: avoid;
-  }
-
-  /* Ensure customer info is visible in print */
-  .customer-grid {
-    page-break-inside: avoid;
-  }
-
-  .customer-item {
     page-break-inside: avoid;
   }
 
@@ -527,6 +588,12 @@
     color: #000 !important;
     background: #f0f0f0 !important;
     border: 1px solid #999 !important;
+  }
+
+  /* Phone number styling */
+  .footer-info p {
+    margin: 3px 0;
+    font-size: 0.85rem;
   }
 }
 
