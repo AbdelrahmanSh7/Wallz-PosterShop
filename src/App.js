@@ -15,7 +15,7 @@ import { LoadingProvider } from './components/Loading/LoadingProvider';
 import PageTransition from './components/PageTransition/PageTransition';
 import InstallButton from './components/PWA/InstallButton';
 import { usePWA } from './components/PWA/PWAManager';
-import NetworkStatus from './components/NetworkStatus';
+// import NetworkStatus from './components/NetworkStatus/NetworkStatus';
 import { registerServiceWorker } from './utils/serviceWorkerUtils';
 import './App.css';
 
@@ -77,7 +77,7 @@ function AppContent() {
       )}
       
       {/* Network Status */}
-      <NetworkStatus />
+      {/* <NetworkStatus /> */}
     </PageTransition>
   );
 }
